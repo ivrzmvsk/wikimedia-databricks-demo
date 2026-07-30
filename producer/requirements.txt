@@ -1,0 +1,5 @@
+azure-eventhub==5.15.1
+azure-identity==1.25.1
+azure-keyvault-secrets==4.10.0
+requests-sse==0.5.3
+requests==2.34.2
