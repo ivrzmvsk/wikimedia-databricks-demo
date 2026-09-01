@@ -1,0 +1,29 @@
+{
+  "name": "wikimedia_streaming_medallion",
+  "edition": "ADVANCED",
+  "continuous": false,
+  "channel": "CURRENT",
+  "catalog": "dbr_dev",
+  "target": "wikimediademo_silver",
+  "libraries": [
+    {
+      "file": {
+        "path": "./pipelines/streaming_medallion/bronze_stream.py"
+      }
+    },
+    {
+      "file": {
+        "path": "./pipelines/streaming_medallion/silver_wikipedia_edits.py"
+      }
+    }
+  ],
+  "configuration": {
+    "wikimedia.catalog": "dbr_dev",
+    "wikimedia.bronze_schema": "wikimediademo_bronze",
+    "wikimedia.silver_schema": "wikimediademo_silver",
+    "wikimedia.eventhub.namespace": "evhpl24databricks02",
+    "wikimedia.eventhub.name": "ivanrazumovskyi_evh",
+    "wikimedia.secret.scope": "wikimediademo-kv-scope",
+    "wikimedia.eventhub.secret_name": "eventhub-connection-string"
+  }
+}
