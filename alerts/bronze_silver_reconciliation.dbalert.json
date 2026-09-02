@@ -1,0 +1,31 @@
+{
+  "evaluation": {
+    "source": {
+      "name": "bronze_code",
+      "display": "source",
+      "aggregation": "COUNT"
+    },
+    "comparison_operator": "NOT_EQUAL",
+    "threshold": {
+      "value": {
+        "double_value": 0.0
+      }
+    },
+    "notification": {}
+  },
+  "schedule": {
+    "quartz_cron_schedule": "58 0 9 * * ?",
+    "timezone_id": "Europe/Warsaw"
+  },
+  "query_lines": [
+    "SELECT ",
+    "    b.wiki_code AS bronze_code,",
+    "    b.project_name AS bronze_project,",
+    "    s.wiki_code AS silver_code",
+    "FROM dbr_dev.wikimediademo_bronze.ref_wikimedia_projects b",
+    "LEFT JOIN dbr_dev.wikimediademo_silver.silver_ref_wikimedia_projects s",
+    "    ON b.wiki_code = s.wiki_code ",
+    "    AND s.__END_AT IS NULL",
+    "WHERE s.wiki_code IS NULL;"
+  ]
+}

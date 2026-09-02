@@ -8,18 +8,14 @@
   "libraries": [
     {
       "file": {
-        "path": "./pipelines/batch_medallion/bronze_reference.py"
+        "path": "/Workspace/Users/jan.mizera.2005@softserve.academy/wikimedia-databricks-demo/pipelines/batch_medallion/bronze_reference.py"
+      }
+    },
+    {
+      "file": {
+        "path": "/Workspace/Users/jan.mizera.2005@softserve.academy/wikimedia-databricks-demo/pipelines/batch_medallion/silver_reference.py"
       }
     }
-  ],
-  "configuration": {
-    "wikimedia.catalog": "dbr_dev",
-    "wikimedia.repo_root": "/Workspace/Users/jan.mizera.2005@softserve.academy/wikimedia-databricks-demo",
-    "wikimedia.bronze_schema": "wikimediademo_bronze",
-    "wikimedia.silver_schema": "wikimediademo_silver",
-    "wikimedia.eventhub.namespace": "evhpl24databricks02",
-    "wikimedia.eventhub.name": "ivanrazumovskyi_evh",
-    "wikimedia.secret.scope": "wikimediademo-kv-scope",
-    "wikimedia.eventhub.secret_name": "eventhub-connection-string"
-  }
+
+  ]
 }
