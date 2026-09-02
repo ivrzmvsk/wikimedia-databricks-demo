@@ -1,0 +1,25 @@
+{
+  "name": "wikimedia_batch_medallion",
+  "edition": "ADVANCED",
+  "continuous": false,
+  "channel": "CURRENT",
+  "catalog": "dbr_dev",
+  "target": "wikimediademo_silver",
+  "libraries": [
+    {
+      "file": {
+        "path": "./pipelines/batch_medallion/bronze_reference.py"
+      }
+    }
+  ],
+  "configuration": {
+    "wikimedia.catalog": "dbr_dev",
+    "wikimedia.repo_root": "/Workspace/Users/jan.mizera.2005@softserve.academy/wikimedia-databricks-demo",
+    "wikimedia.bronze_schema": "wikimediademo_bronze",
+    "wikimedia.silver_schema": "wikimediademo_silver",
+    "wikimedia.eventhub.namespace": "evhpl24databricks02",
+    "wikimedia.eventhub.name": "ivanrazumovskyi_evh",
+    "wikimedia.secret.scope": "wikimediademo-kv-scope",
+    "wikimedia.eventhub.secret_name": "eventhub-connection-string"
+  }
+}
