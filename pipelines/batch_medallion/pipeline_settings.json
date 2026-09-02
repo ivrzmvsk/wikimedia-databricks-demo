@@ -1,0 +1,21 @@
+{
+  "name": "wikimedia_batch_medallion",
+  "edition": "ADVANCED",
+  "continuous": false,
+  "channel": "CURRENT",
+  "catalog": "dbr_dev",
+  "target": "wikimediademo_silver",
+  "libraries": [
+    {
+      "file": {
+        "path": "/Workspace/Users/jan.mizera.2005@softserve.academy/wikimedia-databricks-demo/pipelines/batch_medallion/bronze_reference.py"
+      }
+    },
+    {
+      "file": {
+        "path": "/Workspace/Users/jan.mizera.2005@softserve.academy/wikimedia-databricks-demo/pipelines/batch_medallion/silver_reference.py"
+      }
+    }
+
+  ]
+}
