@@ -1,0 +1,20 @@
+{
+  "name": "wikimedia_streaming_medallion",
+  "edition": "ADVANCED",
+  "continuous": false,
+  "channel": "CURRENT",
+  "catalog": "dbr_dev",
+  "target": "wikimediademo_silver",
+  "libraries": [
+    {
+      "file": {
+        "path": "./pipelines/streaming_medallion/bronze_stream.py"
+      }
+    },
+    {
+      "file": {
+        "path": "./pipelines/streaming_medallion/silver_wikipedia_edits.py"
+      }
+    }
+  ]
+}
