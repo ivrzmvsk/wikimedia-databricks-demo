@@ -4,8 +4,31 @@ from pathlib import Path
 from pyspark import pipelines as dp
 from pyspark.sql import functions as F
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-sys.path.append(str(REPO_ROOT / "src"))
+
+def add_repo_src_to_path() -> None:
+    repo_root = spark.conf.get("wikimedia.repo_root", "")
+    candidates = []
+
+    if repo_root:
+        candidates.append(Path(repo_root) / "src")
+
+    if "__file__" in globals():
+        candidates.append(Path(__file__).resolve().parents[2] / "src")
+
+    candidates.extend(
+        [
+            Path.cwd() / "src",
+            Path.cwd().parent / "src",
+        ]
+    )
+
+    for candidate in candidates:
+        candidate_str = str(candidate)
+        if candidate_str not in sys.path:
+            sys.path.append(candidate_str)
+
+
+add_repo_src_to_path()
 
 from wikimedia_stream.dedup import add_dedup_key, deduplicate_stream_records
 from wikimedia_stream.dq_rules import DQ_RULES, compute_dq_flags

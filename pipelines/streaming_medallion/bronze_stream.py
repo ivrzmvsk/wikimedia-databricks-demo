@@ -3,8 +3,31 @@ from pathlib import Path
 
 from pyspark import pipelines as dp
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-sys.path.append(str(REPO_ROOT / "src"))
+
+def add_repo_src_to_path() -> None:
+    repo_root = spark.conf.get("wikimedia.repo_root", "")
+    candidates = []
+
+    if repo_root:
+        candidates.append(Path(repo_root) / "src")
+
+    if "__file__" in globals():
+        candidates.append(Path(__file__).resolve().parents[2] / "src")
+
+    candidates.extend(
+        [
+            Path.cwd() / "src",
+            Path.cwd().parent / "src",
+        ]
+    )
+
+    for candidate in candidates:
+        candidate_str = str(candidate)
+        if candidate_str not in sys.path:
+            sys.path.append(candidate_str)
+
+
+add_repo_src_to_path()
 
 from wikimedia_stream.transforms import add_bronze_metadata, decode_kafka_events
 

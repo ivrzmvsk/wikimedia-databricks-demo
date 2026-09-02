@@ -19,6 +19,7 @@
   ],
   "configuration": {
     "wikimedia.catalog": "dbr_dev",
+    "wikimedia.repo_root": "/Workspace/Users/ivan.raz3@outlook.com/wikimedia-databricks-demo",
     "wikimedia.bronze_schema": "wikimediademo_bronze",
     "wikimedia.silver_schema": "wikimediademo_silver",
     "wikimedia.eventhub.namespace": "evhpl24databricks02",
