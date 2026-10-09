@@ -1,0 +1,15 @@
+bundle:
+  name: wikimedia-databricks-demo
+
+targets:
+  prod:
+    mode: production
+    workspace:
+      root_path: /Shared/.bundle/${bundle.name}/${bundle.target}bundle:
+  name: wikimedia-databricks-demo
+
+targets:
+  prod:
+    mode: production
+    workspace:
+      root_path: /Shared/.bundle/${bundle.name}/${bundle.target}
