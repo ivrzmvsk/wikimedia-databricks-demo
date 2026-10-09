@@ -27,8 +27,8 @@ jobs:
 
       - name: Lint Code with Flake8
         run: |
-          # stop if has critical syntax error Python
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # Tell flake8 that spark and dbutils are standard Databricks global variables
+          flake8 . --count --select=E9,F63,F7,F82 --builtins=spark,dbutils --show-source --statistics
 
       - name: Run PySpark Tests
         run: |
