@@ -35,3 +35,25 @@ jobs:
       - name: Run PySpark Tests
         run: |
           pytest tests/ -v
+  deploy:
+    name: Databricks CD Deploy
+    needs: test_and_lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Databricks CLI
+        uses: databricks/setup-cli@main
+
+      - name: Test Authentication
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+        run: |
+          # Перевіряємо, що CLI успішно розпізнав Service Principal і підключився до воркспейсу
+          databricks auth describe
+          databricks bundle validate -t prod
