@@ -1,0 +1,43 @@
+resources:
+  pipelines:
+    wikimedia_batch_medallion:
+      name: wikimedia_batch_medallion_${bundle.target}
+      catalog: ${var.catalog}
+      schema: ${var.silver_schema}
+      serverless: true
+      edition: ADVANCED
+      channel: CURRENT
+      continuous: false
+      configuration:
+        wikimedia.repo_root: ${workspace.file_path}
+        wikimedia.catalog: ${var.catalog}
+        wikimedia.bronze_schema: ${var.bronze_schema}
+        wikimedia.silver_schema: ${var.silver_schema}
+      libraries:
+        - file:
+            path: ../pipelines/batch_medallion/bronze_reference.py
+        - file:
+            path: ../pipelines/batch_medallion/silver_reference.py
+
+    wikimedia_streaming_medallion:
+      name: wikimedia_streaming_medallion_${bundle.target}
+      catalog: ${var.catalog}
+      schema: ${var.silver_schema}
+      serverless: true
+      edition: ADVANCED
+      channel: CURRENT
+      continuous: false
+      configuration:
+        wikimedia.repo_root: ${workspace.file_path}
+        wikimedia.catalog: ${var.catalog}
+        wikimedia.bronze_schema: ${var.bronze_schema}
+        wikimedia.silver_schema: ${var.silver_schema}
+        wikimedia.eventhub.namespace: ${var.eventhub_namespace}
+        wikimedia.eventhub.name: ${var.eventhub_name}
+        wikimedia.secret.scope: ${var.secret_scope}
+        wikimedia.eventhub.secret_name: ${var.eventhub_secret_name}
+      libraries:
+        - file:
+            path: ../pipelines/streaming_medallion/bronze_stream.py
+        - file:
+            path: ../pipelines/streaming_medallion/silver_wikipedia_edits.py

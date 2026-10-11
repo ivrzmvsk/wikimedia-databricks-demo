@@ -18,10 +18,10 @@ def fetch_and_parse_sitematrix() -> list[Row]:
     parsed_rows = []
     
     for key, val in sitematrix.items():
-        if key == "count" or not isinstance(val, dict):
+        if key == "count":
             continue
             
-        if "site" in val:
+        if isinstance(val, dict) and "site" in val:
             lang_code = val.get("code", "unknown")
             for site in val["site"]:
                 parsed_rows.append(Row(

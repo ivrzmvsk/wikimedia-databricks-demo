@@ -33,8 +33,8 @@ SILVER_QUARANTINE_TABLE = f"{CATALOG_NAME}.{SILVER_SCHEMA_NAME}.silver_ref_quara
 
 @dp.temporary_view(name="silver_ref_staging")
 def silver_ref_staging():
-    raw_stream = spark.readStream.option("ignoreChanges", "true").table(BRONZE_REFERENCE_TABLE)
-    return compute_dq_flags(raw_stream)
+    snapshot = spark.read.table(BRONZE_REFERENCE_TABLE)
+    return compute_dq_flags(snapshot)
 
 
 @dp.table(
@@ -43,16 +43,16 @@ def silver_ref_staging():
 )
 def silver_ref_quarantine():
     return (
-        dp.read_stream("silver_ref_staging")
+        spark.read.table("silver_ref_staging")
         .filter("_dq_passed = false")
         .withColumn("_quality_status", F.lit("quarantined"))
     )
 
 
-@dp.view(name="silver_ref_clean_stream")
+@dp.temporary_view(name="silver_ref_clean_snapshot")
 @dp.expect_all_or_drop(BATCH_DQ_RULES)
-def silver_ref_clean_stream():
-    return dp.read_stream("silver_ref_staging")
+def silver_ref_clean_snapshot():
+    return spark.read.table("silver_ref_staging")
 
 
 dp.create_streaming_table(
@@ -60,11 +60,10 @@ dp.create_streaming_table(
     comment="SCD Type 2 dimension table for Wikimedia reference data."
 )
 
-dp.create_auto_cdc_flow(
+dp.create_auto_cdc_from_snapshot_flow(
     target=SILVER_REFERENCE_TABLE,
-    source="silver_ref_clean_stream",
+    source="silver_ref_clean_snapshot",
     keys=["wiki_code"],
-    sequence_by="_ingest_timestamp",
     track_history_column_list=["project_name", "language_code", "site_url"],
     stored_as_scd_type=2
 )
