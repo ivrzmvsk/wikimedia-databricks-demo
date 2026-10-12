@@ -51,6 +51,7 @@ jobs:
           ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
           ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
           DATABRICKS_AUTH_TYPE: azure-client-secret
+          BUNDLE_VAR_warehouse_id: ${{ secrets.DATABRICKS_SQL_WAREHOUSE_ID }}
         run: |
           echo "Validate the bundle configuration CI..."
           databricks auth describe
@@ -83,6 +84,7 @@ jobs:
           ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
           ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
           DATABRICKS_AUTH_TYPE: azure-client-secret
+          BUNDLE_VAR_warehouse_id: ${{ secrets.DATABRICKS_SQL_WAREHOUSE_ID }}
         run: |
           echo "Deploying the code to Databricks..."
           databricks bundle deploy -t azure_trial_2
