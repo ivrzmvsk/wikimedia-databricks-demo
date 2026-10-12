@@ -1,0 +1,43 @@
+resources:
+  alerts:
+    wikimedia_quarantine:
+      display_name: wikimedia_quarantine_${bundle.target}
+      warehouse_id: ${var.warehouse_id}
+      query_text: |
+        SELECT COUNT(*) AS quarantine_records
+        FROM `${var.catalog}`.`${var.silver_schema}`.silver_wikipedia_edits_quarantine
+        WHERE silver_ingested_at >= current_timestamp() - INTERVAL 1 HOURS
+      evaluation:
+        source:
+          name: quarantine_records
+          aggregation: MAX
+        comparison_operator: GREATER_THAN
+        threshold:
+          value:
+            double_value: 0
+      schedule:
+        quartz_cron_schedule: '0 15 * * * ?'
+        timezone_id: Europe/Warsaw
+        pause_status: ${var.schedule_pause_status}
+
+    bronze_silver_reconciliation:
+      display_name: wikimedia_reference_reconciliation_${bundle.target}
+      warehouse_id: ${var.warehouse_id}
+      query_text: |
+        SELECT COUNT(*) AS missing_reference_records
+        FROM `${var.catalog}`.`${var.bronze_schema}`.ref_wikimedia_projects b
+        LEFT JOIN `${var.catalog}`.`${var.silver_schema}`.silver_ref_wikimedia_projects s
+          ON b.wiki_code = s.wiki_code AND s.__END_AT IS NULL
+        WHERE s.wiki_code IS NULL
+      evaluation:
+        source:
+          name: missing_reference_records
+          aggregation: MAX
+        comparison_operator: GREATER_THAN
+        threshold:
+          value:
+            double_value: 0
+      schedule:
+        quartz_cron_schedule: '0 30 * * * ?'
+        timezone_id: Europe/Warsaw
+        pause_status: ${var.schedule_pause_status}

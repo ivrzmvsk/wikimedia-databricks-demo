@@ -1,4 +1,4 @@
-pyspark
-pytest
-chispa
-
+pyspark==3.5.8
+pytest==8.4.2
+chispa==0.11.1
+PyYAML==6.0.3

@@ -1,0 +1,80 @@
+resources:
+  jobs:
+    wikimedia_medallion:
+      name: wikimedia_medallion_${bundle.target}
+      max_concurrent_runs: 1
+      queue:
+        enabled: true
+      schedule:
+        quartz_cron_expression: '0 0 * * * ?'
+        timezone_id: Europe/Warsaw
+        pause_status: ${var.schedule_pause_status}
+      tasks:
+        - task_key: setup
+          notebook_task:
+            notebook_path: ../notebooks/setup.py
+            base_parameters: &notebook_parameters
+              catalog: ${var.catalog}
+              bronze_schema: ${var.bronze_schema}
+              silver_schema: ${var.silver_schema}
+              gold_schema: ${var.gold_schema}
+              data_engineers_group: ${var.data_engineers_group}
+              admins_group: ${var.admins_group}
+              row_admin_group: ${var.row_admin_group}
+        - task_key: batch_medallion
+          depends_on:
+            - task_key: setup
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.wikimedia_batch_medallion.id}
+            full_refresh: false
+        - task_key: streaming_medallion
+          depends_on:
+            - task_key: setup
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.wikimedia_streaming_medallion.id}
+            full_refresh: false
+        - task_key: dim_date
+          depends_on:
+            - task_key: setup
+          notebook_task:
+            notebook_path: ../notebooks/gold/01_dim_date.py
+            base_parameters: *notebook_parameters
+        - task_key: dim_editor_type
+          depends_on:
+            - task_key: setup
+          notebook_task:
+            notebook_path: ../notebooks/gold/03_dim_editor_type.py
+            base_parameters: *notebook_parameters
+        - task_key: dim_project
+          depends_on:
+            - task_key: batch_medallion
+          notebook_task:
+            notebook_path: ../notebooks/gold/02_dim_project.py
+            base_parameters: *notebook_parameters
+        - task_key: fact_wikipedia_edits
+          depends_on:
+            - task_key: streaming_medallion
+            - task_key: dim_date
+            - task_key: dim_editor_type
+            - task_key: dim_project
+          notebook_task:
+            notebook_path: ../notebooks/gold/04_fact_wikipedia_edits.py
+            base_parameters: *notebook_parameters
+        - task_key: check_gold
+          depends_on:
+            - task_key: fact_wikipedia_edits
+          notebook_task:
+            notebook_path: ../notebooks/check_gold.py
+            base_parameters: *notebook_parameters
+        - task_key: governance
+          depends_on:
+            - task_key: check_gold
+          notebook_task:
+            notebook_path: ../notebooks/gold/05_unity_catalog_governance.py
+            base_parameters: *notebook_parameters
+        - task_key: dashboard_queries
+          depends_on:
+            - task_key: governance
+          notebook_task:
+            notebook_path: ../notebooks/gold/06_dashboard_queries.py
+            base_parameters: *notebook_parameters
