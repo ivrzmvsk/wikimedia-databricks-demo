@@ -40,6 +40,8 @@ jobs:
     needs: test_and_lint
     runs-on: ubuntu-latest
 
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -47,7 +49,7 @@ jobs:
       - name: Setup Databricks CLI
         uses: databricks/setup-cli@main
 
-      - name: Test Authentication
+      - name: Validate Databricks Bundle
         env:
           DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
           ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
@@ -55,5 +57,16 @@ jobs:
           ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
           DATABRICKS_AUTH_TYPE: azure-client-secret
         run: |
-          databricks auth describe
+          echo "🔍 Валідуємо конфігурацію бандла..."
           databricks bundle validate -t prod
+
+      - name: Deploy Bundle to Workspace
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+          DATABRICKS_AUTH_TYPE: azure-client-secret
+        run: |
+          echo "🚀 Розгортаємо код у середовище Databricks..."
+          databricks bundle deploy -t prod
