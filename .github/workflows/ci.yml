@@ -5,6 +5,7 @@ on:
     branches: [ main ]
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   test_and_lint:
@@ -18,27 +19,44 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.12'
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
 
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
-          pip install flake8 pytest pyspark chispa
+          pip install -r tests/requirements-test.txt
+          pip install flake8
 
       - name: Lint Code with Flake8
         run: |
-          # Tell flake8 that spark and dbutils are standard Databricks global variables
-          flake8 . --count --select=E9,F63,F7,F82 --builtins=spark,dbutils --show-source --statistics
+          flake8 . --count --show-source --statistics
 
       - name: Run PySpark Tests
         run: |
           pytest tests/ -v
   deploy:
-    name: Databricks CD Deploy
+    name: Databricks Azure Trial Deploy
     needs: test_and_lint
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    environment: azure_trial_2
+    concurrency:
+      group: wikimedia-bundle-azure_trial_2
+      cancel-in-progress: false
+    env:
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+      ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+      ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+      DATABRICKS_AUTH_TYPE: azure-client-secret
+      DATABRICKS_CONFIG_FILE: ${{ runner.temp }}/wikimedia.databrickscfg
+      DATABRICKS_BUNDLE_VAR_warehouse_id: ${{ secrets.DATABRICKS_SQL_WAREHOUSE_ID }}
 
     steps:
       - name: Checkout Code
@@ -46,14 +64,24 @@ jobs:
 
       - name: Setup Databricks CLI
         uses: databricks/setup-cli@main
+        with:
+          version: 0.279.0
 
-      - name: Test Authentication
-        env:
-          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
-          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
-          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-          DATABRICKS_AUTH_TYPE: azure-client-secret
+      - name: Configure Azure target profile
+        run: |
+          python - <<'PY'
+          import configparser
+          import os
+          config = configparser.ConfigParser()
+          config['azure_trial_2'] = {'host': os.environ['DATABRICKS_HOST']}
+          with open(os.environ['DATABRICKS_CONFIG_FILE'], 'w') as file:
+              config.write(file)
+          PY
+
+      - name: Validate Azure bundle
         run: |
           databricks auth describe
-          databricks bundle validate -t prod
+          databricks bundle validate -t azure_trial_2 --strict
+
+      - name: Deploy Azure bundle
+        run: databricks bundle deploy -t azure_trial_2

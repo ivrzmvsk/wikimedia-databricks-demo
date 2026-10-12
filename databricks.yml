@@ -1,8 +1,60 @@
 bundle:
   name: wikimedia-databricks-demo
+  databricks_cli_version: '>= 0.279.0'
+
+include:
+  - resources/*.yml
+
+workspace:
+  root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+
+sync:
+  paths:
+    - src
+    - pipelines
+    - notebooks
+
+variables:
+  catalog:
+    description: Existing Unity Catalog catalog.
+    default: workspace
+  bronze_schema:
+    default: wikimediademo_bronze
+  silver_schema:
+    default: wikimediademo_silver
+  gold_schema:
+    default: wikimediademo_gold
+  eventhub_namespace:
+    default: evhpl24databricks02
+  eventhub_name:
+    default: ivanrazumovskyi_evh
+  secret_scope:
+    default: wikimediademo-kv-scope
+  eventhub_secret_name:
+    default: eventhub-connection-string
+  warehouse_id:
+    description: Existing SQL warehouse ID for the quality alerts.
+  schedule_pause_status:
+    description: Schedule state for targets that allow scheduling; development targets remain paused.
+    default: PAUSED
+  data_engineers_group:
+    default: data_engineers
+  admins_group:
+    default: admins
+  row_admin_group:
+    default: admin_group
 
 targets:
-  prod:
-    mode: production
+  ivan_personal:
+    default: true
+    mode: development
     workspace:
-      root_path: /Shared/.bundle/${bundle.name}/${bundle.target}
+      profile: personal-env
+  azure_trial_2:
+    mode: development
+    workspace:
+      profile: azure_trial_2
+    presets:
+      trigger_pause_status: PAUSED
+    variables:
+      catalog: dbr_dev
