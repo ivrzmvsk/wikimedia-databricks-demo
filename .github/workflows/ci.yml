@@ -70,18 +70,15 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.5
+          terraform_wrapper: false
+
       - name: Setup Databricks CLI
         uses: databricks/setup-cli@main
-        with:
-          version: 0.279.0
-      - name: Pre-install Terraform
-        run: |
-          mkdir -p ~/.databricks/bin
-          curl -fsSL https://releases.hashicorp.com/terraform/1.5.5/terraform_1.5.5_linux_amd64.zip -o /tmp/terraform.zip
-          unzip -q -o /tmp/terraform.zip -d ~/.databricks/bin
-          chmod +x ~/.databricks/bin/terraform
-          sudo cp ~/.databricks/bin/terraform /usr/local/bin/terraform
-          ~/.databricks/bin/terraform -version
+
       - name: Deploy Bundle to Workspace (CD)
         env:
           DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
@@ -90,6 +87,7 @@ jobs:
           ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
           DATABRICKS_AUTH_TYPE: azure-client-secret
           BUNDLE_VAR_warehouse_id: ${{ secrets.DATABRICKS_SQL_WAREHOUSE_ID }}
+          DATABRICKS_TERRAFORM_EXEC_PATH: /usr/local/bin/terraform
         run: |
           echo "Deploying the code to Databricks..."
           databricks bundle deploy -t azure_trial_2
