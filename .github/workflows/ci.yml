@@ -25,8 +25,9 @@ jobs:
 
       - name: Lint Code with Flake8
         run: |
-          flake8 . --count --select=E9,F63,F7,F82 --builtins=spark,dbutils --show-source --statistics
-
+          flake8 . --count --select=E9,F63,F7,F82 \
+            --builtins=spark,dbutils,display,GOLD,SILVER,BRONZE,DATA_ENGINEERS_GROUP,ADMINS_GROUP,ROW_ADMIN_GROUP \
+            --show-source --statistics
       - name: Run PySpark Tests
         run: |
           pytest tests/ -v
