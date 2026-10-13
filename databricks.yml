@@ -52,7 +52,7 @@ targets:
       profile: personal-env
 
   azure_trial_2:
-    mode: production
+    mode: development
     workspace:
       profile: azure_trial_2
       root_path: /Workspace/Shared/bundles/${bundle.name}/${bundle.target}
