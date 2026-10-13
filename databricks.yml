@@ -55,7 +55,6 @@ targets:
     mode: development
     workspace:
       profile: azure_trial_2
-      root_path: /Workspace/Shared/bundles/${bundle.name}/${bundle.target}
     variables:
       catalog: dbr_dev
     presets:
