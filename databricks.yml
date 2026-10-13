@@ -51,10 +51,10 @@ targets:
     workspace:
       profile: personal-env
 
-azure_trial_2:
-  mode: production
-  workspace:
-    profile: azure_trial_2
-    root_path: /Workspace/Shared/bundles/${bundle.name}/${bundle.target}
-  variables:
-    catalog: dbr_dev
+  azure_trial_2:
+    mode: production
+    workspace:
+      profile: azure_trial_2
+      root_path: /Workspace/Shared/bundles/${bundle.name}/${bundle.target}
+    variables:
+      catalog: dbr_dev
