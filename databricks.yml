@@ -50,11 +50,9 @@ targets:
     mode: development
     workspace:
       profile: personal-env
+
   azure_trial_2:
-    mode: development
+    mode: production
     workspace:
       profile: azure_trial_2
-    presets:
-      trigger_pause_status: PAUSED
-    variables:
-      catalog: dbr_dev
+      root_path: /Workspace/Shared/bundles/${bundle.name}/${bundle.target}
