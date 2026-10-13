@@ -58,3 +58,5 @@ targets:
       root_path: /Workspace/Shared/bundles/${bundle.name}/${bundle.target}
     variables:
       catalog: dbr_dev
+    presets:
+      trigger_pause_status: PAUSED
