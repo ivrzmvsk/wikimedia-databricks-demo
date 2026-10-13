@@ -50,11 +50,12 @@ targets:
     mode: development
     workspace:
       profile: personal-env
+
   azure_trial_2:
     mode: development
     workspace:
       profile: azure_trial_2
-    presets:
-      trigger_pause_status: PAUSED
     variables:
       catalog: dbr_dev
+    presets:
+      trigger_pause_status: PAUSED
