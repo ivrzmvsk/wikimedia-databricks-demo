@@ -48,8 +48,8 @@ jobs:
         run: |
           pytest tests/ -v
 
-  deploy:
-    name: Databricks Bundle Validation & Deploy
+  validate_bundle:
+    name: Databricks Bundle Validation
     needs: test_and_lint
 
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
@@ -60,20 +60,9 @@ jobs:
       DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
       DATABRICKS_AUTH_TYPE: pat
       BUNDLE_VAR_warehouse_id: ${{ secrets.DATABRICKS_SQL_WAREHOUSE_ID }}
-    concurrency:
-      group: wikimedia-bundle-azure_trial_2
-      cancel-in-progress: false
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
-      - name: Setup Terraform
-        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.5.5
-          terraform_wrapper: false
 
       - name: Setup Databricks CLI
         uses: databricks/setup-cli@main
@@ -91,8 +80,42 @@ jobs:
       - name: Validate Databricks Bundle
         run: databricks bundle validate -t azure_trial_2
 
+  deploy:
+    name: Databricks Deploy
+    needs: validate_bundle
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    environment: azure_trial_2
+    env:
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+      DATABRICKS_AUTH_TYPE: pat
+      BUNDLE_VAR_warehouse_id: ${{ secrets.DATABRICKS_SQL_WAREHOUSE_ID }}
+    concurrency:
+      group: wikimedia-bundle-azure_trial_2
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.5
+          terraform_wrapper: false
+
+      - name: Setup Databricks CLI
+        uses: databricks/setup-cli@main
+
+      - name: Configure Databricks Profile
+        run: |
+          : "${DATABRICKS_HOST:?Set the DATABRICKS_HOST Actions secret}"
+          : "${DATABRICKS_TOKEN:?Set the DATABRICKS_TOKEN Actions secret}"
+          : "${BUNDLE_VAR_warehouse_id:?Set the DATABRICKS_SQL_WAREHOUSE_ID Actions secret}"
+          printf '[azure_trial_2]\nhost = %s\nauth_type = pat\n' "$DATABRICKS_HOST" > ~/.databrickscfg
+
       - name: Deploy Bundle to Workspace (CD)
-        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         env:
           DATABRICKS_TERRAFORM_EXEC_PATH: /usr/local/bin/terraform
         run: |

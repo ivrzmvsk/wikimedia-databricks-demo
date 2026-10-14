@@ -173,6 +173,10 @@ these repository Actions secrets under Settings → Secrets and variables → Ac
 - `DATABRICKS_TOKEN` — a PAT for that workspace with deployment permissions.
 - `DATABRICKS_SQL_WAREHOUSE_ID`
 
+The workflow shows separate jobs for local tests, Databricks validation, and
+deployment. Pull requests run validation; the deployment job is skipped entirely.
+The PAT must belong to the workspace specified by `DATABRICKS_HOST`.
+
 Create the GitHub environment `azure_trial_2`. If it overrides these secrets, use
 the intended workspace and PAT owner. The `ARM_*` secrets are
 no longer used by this workflow.
