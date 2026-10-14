@@ -5,10 +5,14 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   test_and_lint:
-    name: Code Quality, Tests & Bundle Validation
+    name: Code Quality & Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -17,7 +21,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.12'
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -27,7 +31,12 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install flake8 pytest pyspark pyyaml chispa
+          pip install -r tests/requirements-test.txt flake8
+
+      - name: Configure PySpark Python
+        run: |
+          echo "PYSPARK_PYTHON=$(command -v python)" >> "$GITHUB_ENV"
+          echo "PYSPARK_DRIVER_PYTHON=$(command -v python)" >> "$GITHUB_ENV"
 
       - name: Lint Code with Flake8
         run: |
@@ -39,35 +48,49 @@ jobs:
         run: |
           pytest tests/ -v
 
+  validate_bundle:
+    name: Databricks Bundle Validation
+    needs: test_and_lint
+
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    environment: azure_trial_2
+    env:
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+      DATABRICKS_AUTH_TYPE: pat
+      BUNDLE_VAR_warehouse_id: ${{ secrets.DATABRICKS_SQL_WAREHOUSE_ID }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
       - name: Setup Databricks CLI
         uses: databricks/setup-cli@main
 
       - name: Configure Databricks Profile
         run: |
-          cat <<EOF > ~/.databrickscfg
-          [azure_trial_2]
-          host = ${{ secrets.DATABRICKS_HOST }}
-          azure_client_id = ${{ secrets.ARM_CLIENT_ID }}
-          azure_client_secret = ${{ secrets.ARM_CLIENT_SECRET }}
-          azure_tenant_id = ${{ secrets.ARM_TENANT_ID }}
-          auth_type = azure-client-secret
-          EOF
+          : "${DATABRICKS_HOST:?Set the DATABRICKS_HOST Actions secret}"
+          : "${DATABRICKS_TOKEN:?Set the DATABRICKS_TOKEN Actions secret}"
+          : "${BUNDLE_VAR_warehouse_id:?Set the DATABRICKS_SQL_WAREHOUSE_ID Actions secret}"
+          printf '[azure_trial_2]\nhost = %s\nauth_type = pat\n' "$DATABRICKS_HOST" > ~/.databrickscfg
 
-      - name: Validate Databricks Bundle (CI)
-        env:
-          BUNDLE_VAR_warehouse_id: ${{ secrets.DATABRICKS_SQL_WAREHOUSE_ID }}
-        run: |
-          echo "Validate the bundle configuration CI..."
-          databricks auth describe -p azure_trial_2
-          databricks bundle validate -t azure_trial_2
+      - name: Check Databricks Authentication
+        run: databricks current-user me -p azure_trial_2 -o json
+
+      - name: Validate Databricks Bundle
+        run: databricks bundle validate -t azure_trial_2
 
   deploy:
-    name: Databricks CD Deploy
-    needs: test_and_lint
-
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    name: Databricks Deploy
+    needs: validate_bundle
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     environment: azure_trial_2
+    env:
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+      DATABRICKS_AUTH_TYPE: pat
+      BUNDLE_VAR_warehouse_id: ${{ secrets.DATABRICKS_SQL_WAREHOUSE_ID }}
     concurrency:
       group: wikimedia-bundle-azure_trial_2
       cancel-in-progress: false
@@ -87,19 +110,13 @@ jobs:
 
       - name: Configure Databricks Profile
         run: |
-          cat <<EOF > ~/.databrickscfg
-          [azure_trial_2]
-          host = ${{ secrets.DATABRICKS_HOST }}
-          azure_client_id = ${{ secrets.ARM_CLIENT_ID }}
-          azure_client_secret = ${{ secrets.ARM_CLIENT_SECRET }}
-          azure_tenant_id = ${{ secrets.ARM_TENANT_ID }}
-          auth_type = azure-client-secret
-          EOF
+          : "${DATABRICKS_HOST:?Set the DATABRICKS_HOST Actions secret}"
+          : "${DATABRICKS_TOKEN:?Set the DATABRICKS_TOKEN Actions secret}"
+          : "${BUNDLE_VAR_warehouse_id:?Set the DATABRICKS_SQL_WAREHOUSE_ID Actions secret}"
+          printf '[azure_trial_2]\nhost = %s\nauth_type = pat\n' "$DATABRICKS_HOST" > ~/.databrickscfg
 
       - name: Deploy Bundle to Workspace (CD)
         env:
-          BUNDLE_VAR_warehouse_id: ${{ secrets.DATABRICKS_SQL_WAREHOUSE_ID }}
           DATABRICKS_TERRAFORM_EXEC_PATH: /usr/local/bin/terraform
         run: |
-          echo "Deploying the code to Databricks..."
           databricks bundle deploy -t azure_trial_2
