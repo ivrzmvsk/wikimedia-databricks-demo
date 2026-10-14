@@ -32,9 +32,13 @@ def test_targets_use_requested_profiles_and_catalogs():
     assert ivan_personal["workspace"]["profile"] == "personal-env"
     assert bundle["variables"]["catalog"]["default"] == "workspace"
     assert azure["workspace"]["profile"] == "azure_trial_2"
+    assert azure["workspace"]["root_path"] == (
+        "/Workspace/Shared/.bundle/${bundle.name}/${bundle.target}"
+    )
     assert azure["variables"]["catalog"] == "dbr_dev"
     assert azure["presets"]["trigger_pause_status"] == "PAUSED"
-    assert all(target["mode"] == "development" for target in bundle["targets"].values())
+    assert ivan_personal["mode"] == "development"
+    assert "mode" not in azure
     assert bundle["variables"]["schedule_pause_status"]["default"] == "PAUSED"
 
 

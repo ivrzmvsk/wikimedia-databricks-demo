@@ -78,13 +78,19 @@ must be configured explicitly if notifications are needed.
 
 ## Azure cutover
 
-1. Configure the stable CI deployment identity and GitHub `azure_trial_2` environment secrets.
+1. Configure repository Actions secrets `DATABRICKS_HOST`, `DATABRICKS_TOKEN`, and
+   `DATABRICKS_SQL_WAREHOUSE_ID`, and create the GitHub `azure_trial_2` environment.
+   Use a stable PAT owner. The Azure target now uses
+   `/Workspace/Shared/.bundle/wikimedia-databricks-demo/azure_trial_2` with no
+   deployment mode or username in the path. Moving from
+   the previous user folder changes the bundle state path; bind existing resources
+   before deployment if you intend to adopt them instead of creating a second set.
 2. Bind compatible existing resources or choose unused schemas.
 3. Validate and deploy `azure_trial_2` with schedules paused.
 4. Run the complete `wikimedia_medallion` workflow and inspect its outputs.
 5. Switch consumers from legacy Silver names to `silver_wikipedia_edits` where
    needed. The bundle Gold fact already reads this table.
-6. Keep schedules paused for these development targets and run the workflow
+6. Keep schedules paused for these targets and run the workflow
    manually. A future scheduled deployment needs a target configured for it.
 
 Do not use `bundle destroy` to roll back a migration of adopted pipelines: it can

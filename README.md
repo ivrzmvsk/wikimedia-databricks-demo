@@ -71,7 +71,7 @@ The targets reuse the existing CLI profiles:
 | Target | Profile | Catalog | Mode |
 | --- | --- | --- | --- |
 | `ivan_personal` (default) | `personal-env` | `workspace` | development |
-| `azure_trial_2` | `azure_trial_2` | `dbr_dev` | development |
+| `azure_trial_2` | `azure_trial_2` | `dbr_dev` | unset (explicit presets) |
 
 Set the required warehouse ID for the selected workspace:
 
@@ -88,7 +88,10 @@ The profile is selected by the target; no `-p` option is needed. Both targets us
 respective catalogs/workspaces. Override schema variables when sharing a
 workspace with other deployments. The setup task creates the three schemas;
 the catalog must already exist. Workspace files and state live under
-`/Workspace/Users/<deploying-identity>/.bundle/wikimedia-databricks-demo/<target>`.
+`/Workspace/Users/<deploying-identity>/.bundle/wikimedia-databricks-demo/ivan_personal`
+for the personal target, and
+`/Workspace/Shared/.bundle/wikimedia-databricks-demo/azure_trial_2` for the Azure
+team demo target. Source code is uploaded to the `files` subfolder.
 Event Hubs and its secret must be accessible from the selected workspace.
 
 Override deployment settings with environment variables:
@@ -132,14 +135,15 @@ workspace with existing tables or manually created pipelines.
 
 ```bash
 export DATABRICKS_BUNDLE_VAR_warehouse_id=<azure-sql-warehouse-id>
-databricks bundle validate -t azure_trial_2 --strict
+databricks bundle validate -t azure_trial_2
 databricks bundle deploy -t azure_trial_2
 databricks bundle run -t azure_trial_2 wikimedia_medallion
 ```
 
 Use the same deployment identity and variables for subsequent commands so they
-share bundle state. Both targets use development mode, which keeps schedules
-paused. The Azure target also explicitly sets `trigger_pause_status: PAUSED`.
+share bundle state. The personal target uses development mode. The Azure target
+has no deployment mode and explicitly sets `trigger_pause_status: PAUSED`;
+workflow and alert schedules also default to `PAUSED`.
 Run the workflow manually with `bundle run`. There is no production target in
 this bundle.
 
@@ -157,20 +161,44 @@ and content-key deduplication.
 
 ## CI/CD
 
-Pull requests and pushes to `main` run local tests and lint. Pushes to `main`
-and manual runs on `main` additionally validate and deploy `azure_trial_2`, using
-the GitHub `azure_trial_2` environment. CI creates the named CLI profile from the
-host secret; credentials stay in environment variables. Deployment does not start
-a processing run. Configure these GitHub secrets before enabling deployment:
+Pull requests and pushes to `main` run local tests and lint. Same-repository pull
+requests, pushes, and manual runs also validate the bundle. Successful pushes to
+`main` and manual runs on `main` deploy `azure_trial_2`, using the GitHub
+`azure_trial_2` environment for both validation and deployment. CI authenticates with
+a PAT and creates the named CLI profile from the host secret; the token stays in
+environment variables. Deployment does not start a processing run. Configure
+these repository Actions secrets under Settings → Secrets and variables → Actions:
 
 - `DATABRICKS_HOST`
-- `ARM_CLIENT_ID`, `ARM_CLIENT_SECRET`, `ARM_TENANT_ID`
+- `DATABRICKS_TOKEN` — a PAT for that workspace with deployment permissions.
 - `DATABRICKS_SQL_WAREHOUSE_ID`
 
-Other `DATABRICKS_BUNDLE_VAR_*` settings can be supplied in the deploy job's
+Create the GitHub environment `azure_trial_2`. If it overrides these secrets, use
+the intended workspace and PAT owner. The `ARM_*` secrets are
+no longer used by this workflow.
+
+To run manually, open Actions → Wikimedia CI/CD Pipeline → Run workflow and
+select `main`. Other branches validate without deploying. The workflow checks the
+PAT with `current-user me` before validating the bundle and deploying. Local tests
+use Python 3.12, Java 17, and the pinned dependencies in `tests/requirements-test.txt`.
+
+The Azure target deploys under
+`/Workspace/Shared/.bundle/wikimedia-databricks-demo/azure_trial_2`, independent of
+the PAT owner. The Azure target omits deployment mode so that its shared path
+does not require a username and resource names have no automatic `[dev ...]` prefix.
+The CLI warns about Shared being writable by all workspace users; this is
+intentional for the demo, and `--strict` treats that warning as an error.
+This shared location is intended for the team demo. Folder access
+does not grant access to jobs, pipelines, or Unity Catalog tables; configure those
+permissions separately. Moving an existing deployment from a user folder to
+Shared changes the bundle state location and can create a second set of resources.
+Bind compatible existing resources before deploying at the new path; see the
+migration guide.
+
+Other `BUNDLE_VAR_*` settings can be supplied in the deploy job's
 `env` block. Bind existing resources with the CI deployment identity before its
-first deployment to the selected workspace. Fork pull requests do not receive deployment credentials or
-run the deploy job.
+first deployment to the selected workspace. Fork pull requests run local tests
+and lint; they skip Databricks authentication, validation, and deployment.
 
 ## Local checks
 
