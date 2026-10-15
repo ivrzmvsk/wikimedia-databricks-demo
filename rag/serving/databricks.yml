@@ -21,20 +21,12 @@ variables:
     default: databricks-gemma-3-12b
 include:
   - search.yml
-# The App is a separate deployable target of this bundle, enabled AFTER sync.
+# RAG resources are restricted to the personal workspace.
 targets:
   ivan_personal:
     default: true
     workspace:
       profile: personal-env
+      host: https://dbc-ab9a5afe-c151.cloud.databricks.com
     variables:
       endpoint_name: ivanrazumovskyi-lab12-steam-dev
-  azure_trial_2:
-    workspace:
-      profile: azure_trial_2
-    variables:
-      endpoint_name: ''
-      catalog: dbr_dev
-      ai_schema: wikimediademo_ai_azure
-      embedding_endpoint: ''
-      llm_endpoint: ''

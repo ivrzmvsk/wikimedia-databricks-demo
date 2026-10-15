@@ -128,7 +128,10 @@ def test_separate_bundles_paths_defaults_and_privileges():
     assert all(r["serving_endpoint"]["permission"] == "CAN_QUERY" for r in resources[1:])
     for config in [prep, app, yaml.safe_load((ROOT / "rag/serving/databricks.yml").read_text())]:
         assert config["bundle"]["engine"] == "direct"
-        assert set(config["targets"]) == {"ivan_personal", "azure_trial_2"}
+        assert set(config["targets"]) == {"ivan_personal"}
+        personal = config["targets"]["ivan_personal"]
+        assert personal["workspace"]["profile"] == "personal-env"
+        assert personal["workspace"]["host"] == "https://dbc-ab9a5afe-c151.cloud.databricks.com"
 
 
 def test_package_refuses_unready_report(tmp_path):
@@ -156,8 +159,7 @@ def test_managed_retry_does_not_mask_original_sync_failure():
 def test_app_names_fit_cloud_api_limits():
     import re
     config = yaml.safe_load((ROOT / "rag/application/databricks.yml").read_text())
-    names = [config["variables"]["app_name"]["default"],
-             config["targets"]["azure_trial_2"]["variables"]["app_name"]]
+    names = [config["variables"]["app_name"]["default"]]
     assert all(2 <= len(n) <= 30 and re.fullmatch(r"[a-z][a-z0-9-]*", n) for n in names)
 
 
@@ -243,3 +245,20 @@ def test_answer_language_is_explicit_per_question(question, language):
     retrieval.answer(client, 'model', question, [row()])
     system = client.api_client.do.call_args.kwargs['body']['messages'][0]['content']
     assert f'Required response language: {language}.' in system
+
+
+def test_azure_main_bundle_and_ci_exclude_rag_resources():
+    main = yaml.safe_load((ROOT / "databricks.yml").read_text())
+    assert "azure_trial_2" in main["targets"]
+    assert main["include"] == ["resources/*.yml"]
+    for pattern in main["include"]:
+        for path in ROOT.glob(pattern):
+            resources = yaml.safe_load(path.read_text()).get("resources", {})
+            assert "apps" not in resources and "vector_search_indexes" not in resources
+            assert "wikimedia_rag" not in resources.get("jobs", {})
+    workflow = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())
+    for job in ["validate_bundle", "deploy"]:
+        runs = [s.get("run", "") for s in workflow["jobs"][job]["steps"]]
+        assert not any("rag/" in command for command in runs)
+    assert any("databricks bundle deploy -t azure_trial_2" in s.get("run", "")
+               for s in workflow["jobs"]["deploy"]["steps"])

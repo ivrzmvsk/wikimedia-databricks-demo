@@ -1,18 +1,27 @@
 resources:
   jobs:
+    # Retain the existing resource key/ID for the scheduled event-processing job.
     wikimedia_medallion:
-      name: wikimedia_medallion_${bundle.target}
+      name: wikimedia_events_${bundle.target}
+      description: Process events using the last successfully published project dimension.
       max_concurrent_runs: 1
       queue:
         enabled: true
+      email_notifications: ${var.job_email_notifications}
       schedule:
         quartz_cron_expression: '0 0 * * * ?'
         timezone_id: Europe/Warsaw
         pause_status: ${var.schedule_pause_status}
       tasks:
-        - task_key: setup
+        - task_key: process_events_to_silver
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.wikimedia_streaming_medallion.id}
+            full_refresh: false
+        - task_key: refresh_gold_edit_facts
+          depends_on:
+            - task_key: process_events_to_silver
           notebook_task:
-            notebook_path: ../notebooks/setup.py
+            notebook_path: ../notebooks/gold/04_fact_wikipedia_edits.py
             base_parameters: &notebook_parameters
               zerobus_service_principal: ${var.zerobus_service_principal}
               catalog: ${var.catalog}
@@ -22,60 +31,70 @@ resources:
               data_engineers_group: ${var.data_engineers_group}
               admins_group: ${var.admins_group}
               row_admin_group: ${var.row_admin_group}
-        - task_key: batch_medallion
+        - task_key: validate_gold_edit_facts
           depends_on:
-            - task_key: setup
-          pipeline_task:
-            pipeline_id: ${resources.pipelines.wikimedia_batch_medallion.id}
-            full_refresh: false
-        - task_key: streaming_medallion
-          depends_on:
-            - task_key: setup
-          pipeline_task:
-            pipeline_id: ${resources.pipelines.wikimedia_streaming_medallion.id}
-            full_refresh: false
-        - task_key: dim_date
-          depends_on:
-            - task_key: setup
-          notebook_task:
-            notebook_path: ../notebooks/gold/01_dim_date.py
-            base_parameters: *notebook_parameters
-        - task_key: dim_editor_type
-          depends_on:
-            - task_key: setup
-          notebook_task:
-            notebook_path: ../notebooks/gold/03_dim_editor_type.py
-            base_parameters: *notebook_parameters
-        - task_key: dim_project
-          depends_on:
-            - task_key: batch_medallion
-          notebook_task:
-            notebook_path: ../notebooks/gold/02_dim_project.py
-            base_parameters: *notebook_parameters
-        - task_key: fact_wikipedia_edits
-          depends_on:
-            - task_key: streaming_medallion
-            - task_key: dim_date
-            - task_key: dim_editor_type
-            - task_key: dim_project
-          notebook_task:
-            notebook_path: ../notebooks/gold/04_fact_wikipedia_edits.py
-            base_parameters: *notebook_parameters
-        - task_key: check_gold
-          depends_on:
-            - task_key: fact_wikipedia_edits
+            - task_key: refresh_gold_edit_facts
           notebook_task:
             notebook_path: ../notebooks/check_gold.py
             base_parameters: *notebook_parameters
-        - task_key: governance
+
+    wikimedia_reference:
+      name: wikimedia_reference_${bundle.target}
+      description: Refresh SiteMatrix and publish the project dimension independently of events.
+      max_concurrent_runs: 1
+      queue:
+        enabled: true
+      email_notifications: ${var.job_email_notifications}
+      schedule:
+        quartz_cron_expression: '0 0 3 * * ?'
+        timezone_id: Europe/Warsaw
+        pause_status: ${var.schedule_pause_status}
+      tasks:
+        - task_key: refresh_project_reference
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.wikimedia_batch_medallion.id}
+            full_refresh: false
+        - task_key: refresh_gold_project_dimension
           depends_on:
-            - task_key: check_gold
+            - task_key: refresh_project_reference
           notebook_task:
-            notebook_path: ../notebooks/gold/05_unity_catalog_governance.py
+            notebook_path: ../notebooks/gold/02_dim_project.py
             base_parameters: *notebook_parameters
-        - task_key: dashboard_queries
+        - task_key: validate_gold_project_dimension
           depends_on:
-            - task_key: governance
+            - task_key: refresh_gold_project_dimension
           notebook_task:
-            notebook_path: ../notebooks/gold/06_dashboard_queries.py
+            notebook_path: ../notebooks/check_reference.py
+            base_parameters: *notebook_parameters
+
+    wikimedia_setup:
+      name: wikimedia_setup_${bundle.target}
+      description: Manually prepare schemas, inbox, static dimensions, and Gold governance. Does not run processing jobs.
+      max_concurrent_runs: 1
+      queue:
+        enabled: true
+      email_notifications: ${var.job_email_notifications}
+      tasks:
+        - task_key: create_schemas
+          notebook_task:
+            notebook_path: ../notebooks/setup.py
+            base_parameters: *notebook_parameters
+        - task_key: create_event_inbox
+          depends_on:
+            - task_key: create_schemas
+          notebook_task:
+            notebook_path: ../notebooks/setup_inbox.py
+            base_parameters: *notebook_parameters
+        - task_key: refresh_static_dimensions
+          depends_on:
+            - task_key: create_schemas
+          notebook_task:
+            notebook_path: ../notebooks/setup_static_dimensions.py
+            base_parameters: *notebook_parameters
+        - task_key: prepare_gold_fact_and_policies
+          depends_on:
+            - task_key: create_event_inbox
+            - task_key: refresh_static_dimensions
+          notebook_task:
+            notebook_path: ../notebooks/setup_gold.py
             base_parameters: *notebook_parameters

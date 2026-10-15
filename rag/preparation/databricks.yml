@@ -112,11 +112,4 @@ targets:
     default: true
     workspace:
       profile: personal-env
-  azure_trial_2:
-    workspace:
-      profile: azure_trial_2
-    variables:
-      catalog: dbr_dev
-      ai_schema: wikimediademo_ai_azure
-      embedding_endpoint: ''
-      llm_endpoint: ''
+      host: https://dbc-ab9a5afe-c151.cloud.databricks.com

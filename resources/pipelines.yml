@@ -34,6 +34,4 @@ resources:
         wikimedia.silver_schema: ${var.silver_schema}
       libraries:
         - file:
-            path: ../pipelines/streaming_medallion/bronze_stream.py
-        - file:
             path: ../pipelines/streaming_medallion/silver_wikipedia_edits.py

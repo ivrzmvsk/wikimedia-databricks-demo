@@ -83,11 +83,6 @@ jobs:
       - name: Validate Databricks Bundle
         run: databricks bundle validate -t azure_trial_2
 
-      - name: Validate separate RAG configurations (no deployment or workload)
-        run: |
-          (cd rag/preparation && databricks bundle validate -t azure_trial_2)
-          (cd rag/serving && databricks bundle validate -t azure_trial_2)
-
   deploy:
     name: Databricks Deploy
     needs: validate_bundle

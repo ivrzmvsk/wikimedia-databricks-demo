@@ -134,9 +134,10 @@ process deadline even for heartbeat-only SSE. Existing regression tests cover bo
 ## First release commands (only after approval)
 
 Run from the repository root with Databricks CLI >=1.1.0. Set contact explicitly.
-All commands below use `ivan_personal`; use `azure_trial_2` only after separately
-checking its models, service availability, identities and prices. Azure settings
-have empty model overrides intentionally, rather than fabricated host/identity.
+All three RAG bundles support only `ivan_personal` and pin the personal workspace
+host. `azure_trial_2` is intentionally absent, so selecting that target fails
+before deployment. Azure CI validates and deploys only the main medallion bundle;
+it never deploys the RAG job, AI Search index or App.
 Keep catalog/index/model values consistent between the three bundles.
 
 ```sh
