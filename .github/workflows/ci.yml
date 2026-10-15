@@ -41,7 +41,7 @@ jobs:
       - name: Lint Code with Flake8
         run: |
           flake8 . --count --select=E9,F63,F7,F82 \
-            --builtins=spark,dbutils,display,GOLD,SILVER,BRONZE,DATA_ENGINEERS_GROUP,ADMINS_GROUP,ROW_ADMIN_GROUP \
+            --builtins=spark,dbutils,display,CATALOG,GOLD,SILVER,BRONZE,DATA_ENGINEERS_GROUP,ADMINS_GROUP,ROW_ADMIN_GROUP,ZEROBUS_SERVICE_PRINCIPAL,identifier \
             --show-source --statistics
 
       - name: Run PySpark Tests
@@ -83,7 +83,8 @@ jobs:
   deploy:
     name: Databricks Deploy
     needs: validate_bundle
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    # Deploy only when explicitly started with Actions -> Run workflow on main.
+    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     environment: azure_trial_2
     env:
