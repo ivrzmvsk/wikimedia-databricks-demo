@@ -14,6 +14,7 @@ resources:
           notebook_task:
             notebook_path: ../notebooks/setup.py
             base_parameters: &notebook_parameters
+              zerobus_service_principal: ${var.zerobus_service_principal}
               catalog: ${var.catalog}
               bronze_schema: ${var.bronze_schema}
               silver_schema: ${var.silver_schema}

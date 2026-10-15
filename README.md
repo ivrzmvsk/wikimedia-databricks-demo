@@ -9,7 +9,7 @@ in this repository.
 ## Architecture
 
 ```text
-Wikimedia SSE → Python producer → Azure Event Hubs
+Wikimedia SSE → Python producer → Zerobus → Delta inbox
                                       ↓
                             streaming Lakeflow pipeline
                             Bronze → Silver + quarantine
@@ -21,7 +21,12 @@ SiteMatrix API → batch Lakeflow pipeline → SCD2 project reference
                       quality checks → governance → analytics queries
 ```
 
-The producer remains an external Docker application. The bundle deploys the
+Zerobus is the only source configured in the deployed streaming pipeline.
+See [the Zerobus guide](docs/zerobus.md) for setup, local OAuth files and
+capture/replay commands. The original Event Hubs producer and manual notebooks
+remain historical references and are not run by the bundle.
+
+The producer runs externally with Python in a virtual environment. The bundle deploys the
 Databricks side: two triggered serverless Lakeflow pipelines, one serverless
 workflow, and two SQL alerts. It does not provision Event Hubs, Azure storage,
 Key Vault, the producer's hosting, or a dashboard UI.
@@ -37,7 +42,8 @@ Key Vault, the producer's hosting, or a dashboard UI.
 | `pipelines/` | Lakeflow dataset definitions |
 | `src/` | Shared transformations, schemas, DQ, and deduplication |
 | `notebooks/` | Parameterized setup, Gold, governance, analytics, and checks |
-| `producer/` | External Wikimedia SSE → Event Hubs container |
+| `producer/` | Zerobus producer directory and historical Event Hubs producer |
+| `producer/zerobus/` | Python Zerobus producer, workspace targets and dependencies |
 | `tests/` | Local PySpark, bundle, and Gold transformation tests |
 | `00-setup/` through `05_bronze_dashboard_analytics/` | Historical manual notebooks, excluded from bundle synchronization |
 | `alerts/` | Historical SQL/JSON exports, superseded by `resources/alerts.yml` |
@@ -52,16 +58,16 @@ as references; the workflow runs the parameterized versions in `notebooks/`.
 - A Unity Catalog catalog (`workspace` for `ivan_personal`, `dbr_dev` for `azure_trial_2`) and access to create schemas,
   materialized views, streaming tables, tables, and functions in that catalog.
 - Serverless Jobs and Lakeflow compute enabled, plus outbound access to the
-  Wikimedia SiteMatrix API and the Event Hubs Kafka endpoint.
+  Wikimedia SiteMatrix API. The external producer needs access to Wikimedia SSE
+  and the workspace Zerobus endpoint.
 - An existing SQL warehouse, with permission to use it for the bundle alerts.
-- Event Hubs and a Databricks secret containing its connection string. Defaults:
-  namespace `evhpl24databricks02`, hub `ivanrazumovskyi_evh`, secret scope
-  `wikimediademo-kv-scope`, key `eventhub-connection-string`.
+- A workspace Zerobus endpoint and Databricks OAuth M2M service principal with
+  access to the managed inbox table. Event Hubs credentials are not required.
 - Account groups used by the governance functions. Defaults retain the existing
   `data_engineers`, `admins`, and `admin_group` names; override them as needed.
 
-Credentials are read through Databricks profiles/environment variables and the
-secret scope. Do not put connection strings in bundle YAML or variable files.
+Credentials are read through Databricks profiles/environment variables and local
+ignored env files. Do not put client secrets in bundle YAML or variable files.
 The deployment identity must have permission to manage the bundle resources.
 
 ## Deploy and run
@@ -76,10 +82,13 @@ The targets reuse the existing CLI profiles:
 Set the required warehouse ID for the selected workspace:
 
 ```bash
-export DATABRICKS_BUNDLE_VAR_warehouse_id=<sql-warehouse-id>
+export BUNDLE_VAR_warehouse_id=<sql-warehouse-id>
+export BUNDLE_VAR_zerobus_service_principal=<oauth-application-id>
 
 databricks bundle validate -t ivan_personal --strict
 databricks bundle deploy -t ivan_personal
+databricks bundle run -t ivan_personal wikimedia_medallion --only setup
+# Run the Zerobus producer as described in docs/zerobus.md before processing.
 databricks bundle run -t ivan_personal wikimedia_medallion
 ```
 
@@ -92,19 +101,16 @@ the catalog must already exist. Workspace files and state live under
 for the personal target, and
 `/Workspace/Shared/.bundle/wikimedia-databricks-demo/azure_trial_2` for the Azure
 team demo target. Source code is uploaded to the `files` subfolder.
-Event Hubs and its secret must be accessible from the selected workspace.
+The producer's OAuth principal must have access to the selected workspace inbox.
 
 Override deployment settings with environment variables:
 
 ```bash
-export DATABRICKS_BUNDLE_VAR_catalog=workspace
-export DATABRICKS_BUNDLE_VAR_eventhub_namespace=<namespace>
-export DATABRICKS_BUNDLE_VAR_eventhub_name=<hub>
-export DATABRICKS_BUNDLE_VAR_secret_scope=<scope>
-export DATABRICKS_BUNDLE_VAR_eventhub_secret_name=<secret-key>
+export BUNDLE_VAR_catalog=workspace
+export BUNDLE_VAR_zerobus_service_principal=<oauth-application-id>
 ```
 
-Alternatively, use `--var="catalog=workspace,eventhub_name=my-hub"` on bundle
+Alternatively, use `--var="catalog=workspace,bronze_schema=my_bronze"` on bundle
 commands. Use the same settings for validate, deploy, and run. Notebook parameters
 are derived from these deployment variables, keeping Gold aligned with the
 Lakeflow tables.
@@ -134,7 +140,7 @@ Read [the migration guide](docs/bundle-migration.md) before deploying into a
 workspace with existing tables or manually created pipelines.
 
 ```bash
-export DATABRICKS_BUNDLE_VAR_warehouse_id=<azure-sql-warehouse-id>
+export BUNDLE_VAR_warehouse_id=<azure-sql-warehouse-id>
 databricks bundle validate -t azure_trial_2
 databricks bundle deploy -t azure_trial_2
 databricks bundle run -t azure_trial_2 wikimedia_medallion

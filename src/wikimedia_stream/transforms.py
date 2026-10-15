@@ -23,6 +23,22 @@ def decode_kafka_events(df: DataFrame) -> DataFrame:
     )
 
 
+def decode_zerobus_events(df: DataFrame) -> DataFrame:
+    """Adapt the Zerobus inbox to the existing Bronze/Silver contract."""
+    return (
+        df.select(
+            "event_json",
+            F.lit(None).cast("string").alias("kafka_topic"),
+            F.lit(None).cast("int").alias("kafka_partition"),
+            F.lit(None).cast("long").alias("kafka_offset"),
+            F.lit(None).cast("timestamp").alias("kafka_enqueued_at"),
+        )
+        .withColumn("_source", F.lit("zerobus_wikimedia_recentchange"))
+        .withColumn("_ingested_at", F.current_timestamp())
+        .withColumn("_load_date", F.current_date())
+    )
+
+
 def parse_bronze_to_silver(df: DataFrame) -> DataFrame:
     parse_schema = StructType(
         WIKIPEDIA_EVENT_SCHEMA.fields

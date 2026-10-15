@@ -3,8 +3,11 @@ __pycache__/
 *.py[cod]
 
 .env
+.env.*
+!.env.example
 *.env
 producer/.env
+.state/
 
 .databricks/
 .venv/

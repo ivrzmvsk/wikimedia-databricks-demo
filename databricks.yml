@@ -15,6 +15,9 @@ sync:
     - notebooks
 
 variables:
+  zerobus_service_principal:
+    description: Optional OAuth application ID granted access to the Zerobus inbox during setup.
+    default: ''
   catalog:
     description: Existing Unity Catalog catalog.
     default: workspace
@@ -24,14 +27,6 @@ variables:
     default: wikimediademo_silver
   gold_schema:
     default: wikimediademo_gold
-  eventhub_namespace:
-    default: evhpl24databricks02
-  eventhub_name:
-    default: ivanrazumovskyi_evh
-  secret_scope:
-    default: wikimediademo-kv-scope
-  eventhub_secret_name:
-    default: eventhub-connection-string
   warehouse_id:
     description: Existing SQL warehouse ID for the quality alerts.
   schedule_pause_status:

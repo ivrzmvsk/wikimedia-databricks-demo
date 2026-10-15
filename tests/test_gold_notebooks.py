@@ -20,6 +20,8 @@ def test_parameterized_gold_build_reconciles_and_can_be_rerun(spark):
         get=lambda name: parameters[name],
     )
     def local_sql(query):
+        # The external Zerobus inbox is also represented with local Parquet.
+        query = query.replace("USING DELTA", "USING parquet")
         # Local Spark has no Delta REPLACE TABLE. Execute the same SELECTs
         # against Parquet tables; replacement semantics need a workspace check.
         match = re.search(r"CREATE OR REPLACE TABLE (\S+) AS", query)

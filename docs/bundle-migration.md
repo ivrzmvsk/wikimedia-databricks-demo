@@ -8,15 +8,25 @@ separate: `bundle deploy` uploads code and creates/updates resource definitions;
 ## Start with the ivan_personal target
 
 1. The `ivan_personal` target uses `personal-env` / `workspace`; `azure_trial_2` uses
-   `azure_trial_2` / `dbr_dev`. Select the intended target and set `DATABRICKS_BUNDLE_VAR_warehouse_id`.
+   `azure_trial_2` / `dbr_dev`. Select the intended target and set `BUNDLE_VAR_warehouse_id`.
 2. Run `databricks bundle validate -t ivan_personal --strict`.
 3. Deploy and run `wikimedia_medallion` in `ivan_personal`.
 4. Check both Lakeflow updates, Gold checks, and governance in the Jobs UI.
 5. Confirm the selected profile/catalog and override schemas if names are already in use.
 
 The bundle requires serverless Jobs/Lakeflow, an existing catalog, SQL warehouse,
-and the Event Hubs secret. It creates schemas at workflow runtime. Azure resources
-and the external producer keep their existing lifecycle.
+and Zerobus OAuth credentials. It creates schemas and the inbox at workflow
+runtime. Azure resources and the external producer keep their existing lifecycle.
+
+## Existing Event Hubs deployment
+
+Keep the current pipeline IDs, schemas and tables. The active streaming source
+is now only the Zerobus inbox. Bronze uses a named `zerobus_wikimedia_ingest`
+append flow with its own checkpoint, while the former Kafka flow is removed.
+This preserves historical Bronze rows and the existing Silver stream state.
+Run setup first, then the producer, then the full workflow. Do not request a
+full refresh: the inbox does not contain the historical Event Hubs records.
+No second pipeline or separate set of Gold tables is needed for this cutover.
 
 ## Choose how to handle existing Azure table ownership
 
@@ -44,16 +54,15 @@ those tables occupy the target names, use new schema names for the first bundle
 run, validate the outputs, and plan the consumer cutover. For example:
 
 ```bash
-export DATABRICKS_BUNDLE_VAR_bronze_schema=wikimediademo_bundle_bronze
-export DATABRICKS_BUNDLE_VAR_silver_schema=wikimediademo_bundle_silver
-export DATABRICKS_BUNDLE_VAR_gold_schema=wikimediademo_bundle_gold
+export BUNDLE_VAR_bronze_schema=wikimediademo_bundle_bronze
+export BUNDLE_VAR_silver_schema=wikimediademo_bundle_silver
+export BUNDLE_VAR_gold_schema=wikimediademo_bundle_gold
 ```
 
 These variables also redirect the Gold notebooks and alert queries. Keep the
-settings consistent in CI and all subsequent commands. The new streaming pipeline
-starts at the earliest events still retained by Event Hubs; that is not a backfill
-of historical events that have expired from Event Hubs. Plan a separate historical
-load if the new schemas must contain all old data.
+settings consistent in CI and all subsequent commands. The streaming pipeline
+reads the Zerobus inbox. New schemas do not contain old Event Hubs history;
+plan a separate historical load if it is needed.
 
 Do not run the legacy streaming consumers and bundle pipelines against the same
 target tables. Stop legacy schedules at cutover after validating the new flow.

@@ -1,0 +1,5 @@
+databricks-zerobus-ingest-sdk==1.10.0
+databricks-sdk==0.152.0
+python-dotenv==1.2.4
+requests-sse==0.5.3
+requests==2.34.2

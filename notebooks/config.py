@@ -15,6 +15,7 @@ for parameter in ("catalog", "bronze_schema", "silver_schema", "gold_schema"):
     dbutils.widgets.text(parameter, "")
 
 for parameter, default in (
+    ("zerobus_service_principal", ""),
     ("data_engineers_group", "data_engineers"),
     ("admins_group", "admins"),
     ("row_admin_group", "admin_group"),
@@ -31,3 +32,4 @@ GOLD = f"{CATALOG}.{GOLD_SCHEMA}"
 DATA_ENGINEERS_GROUP = sql_literal(dbutils.widgets.get("data_engineers_group"))
 ADMINS_GROUP = sql_literal(dbutils.widgets.get("admins_group"))
 ROW_ADMIN_GROUP = sql_literal(dbutils.widgets.get("row_admin_group"))
+ZEROBUS_SERVICE_PRINCIPAL = dbutils.widgets.get("zerobus_service_principal")
