@@ -86,8 +86,8 @@ jobs:
   deploy:
     name: Databricks Deploy
     needs: validate_bundle
-    # Deploy only when explicitly started with Actions -> Run workflow on main.
-    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
+    # A merged PR updates main and triggers push; manual deployment stays available.
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     environment: azure_trial_2
     env:

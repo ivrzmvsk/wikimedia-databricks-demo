@@ -16,6 +16,7 @@
         "FROM `workspace`.`wikimediademo_gold`.`fact_wikipedia_edits` f\n",
         "JOIN `workspace`.`wikimediademo_gold`.`dim_project` p ON f.`project_key` = p.`project_key`\n",
         "WHERE p.`language_name` IS NOT NULL\n",
+        "  AND p.`language_code` NOT IN ('commons', 'wikidata')\n",
         "GROUP BY p.`language_name`\n",
         "ORDER BY total_edits DESC\n",
         "LIMIT 20\n"
@@ -126,6 +127,7 @@
         "JOIN `workspace`.`wikimediademo_gold`.`dim_project` p ON f.`project_key` = p.`project_key`\n",
         "JOIN `workspace`.`wikimediademo_gold`.`dim_editor_type` et ON f.`editor_type_key` = et.`editor_type_key`\n",
         "WHERE p.`language_name` IS NOT NULL\n",
+        "  AND p.`language_code` NOT IN ('commons', 'wikidata')\n",
         "GROUP BY p.`language_name`\n",
         "ORDER BY (bot_edits + human_edits) DESC\n",
         "LIMIT 12\n"
@@ -146,6 +148,7 @@
         "JOIN `workspace`.`wikimediademo_gold`.`dim_project` p ON f.`project_key` = p.`project_key`\n",
         "JOIN `workspace`.`wikimediademo_gold`.`dim_editor_type` et ON f.`editor_type_key` = et.`editor_type_key`\n",
         "WHERE p.`language_name` IS NOT NULL\n",
+        "  AND p.`language_code` NOT IN ('commons', 'wikidata')\n",
         "  AND p.`language_name` IN ('English', 'French', 'German', 'Spanish', 'Russian', 'Italian', 'Chinese', 'Japanese', 'Arabic', 'Portuguese')\n",
         "GROUP BY p.`language_name`, et.`editor_type_desc`\n",
         "ORDER BY p.`language_name`, et.`editor_type_desc`\n"
@@ -167,6 +170,7 @@
         "JOIN `workspace`.`wikimediademo_gold`.`dim_project` p ON f.`project_key` = p.`project_key`\n",
         "JOIN `workspace`.`wikimediademo_gold`.`dim_editor_type` et ON f.`editor_type_key` = et.`editor_type_key`\n",
         "WHERE p.`language_name` IS NOT NULL\n",
+        "  AND p.`language_code` NOT IN ('commons', 'wikidata')\n",
         "GROUP BY p.`language_name`\n",
         "ORDER BY total_edits DESC\n",
         "LIMIT 15\n"
@@ -185,11 +189,13 @@
         "JOIN `workspace`.`wikimediademo_gold`.`dim_project` p ON f.`project_key` = p.`project_key`\n",
         "JOIN `workspace`.`wikimediademo_gold`.`dim_editor_type` et ON f.`editor_type_key` = et.`editor_type_key`\n",
         "WHERE p.`language_name` IS NOT NULL\n",
+        "  AND p.`language_code` NOT IN ('commons', 'wikidata')\n",
         "  AND p.`language_name` IN (\n",
         "    SELECT p2.`language_name`\n",
         "    FROM `workspace`.`wikimediademo_gold`.`fact_wikipedia_edits` f2\n",
         "    JOIN `workspace`.`wikimediademo_gold`.`dim_project` p2 ON f2.`project_key` = p2.`project_key`\n",
         "    WHERE p2.`language_name` IS NOT NULL\n",
+        "  AND p2.`language_code` NOT IN ('commons', 'wikidata')\n",
         "    GROUP BY p2.`language_name`\n",
         "    ORDER BY COUNT(*) DESC\n",
         "    LIMIT 15\n",
