@@ -237,8 +237,10 @@ and content-key deduplication.
 ## CI/CD
 
 Pull requests and pushes to `main` run local tests and lint. Same-repository pull
-requests, pushes, and manual runs also validate the bundle. Deployment is
-manual-only: runs started with `Run workflow` on `main` deploy `azure_trial_2`, using the GitHub
+requests, pushes, and manual runs also validate the bundle. After tests and bundle
+validation pass, pushes to `main` (including merged pull requests) automatically
+deploy `azure_trial_2`. Direct pushes to `main` also deploy. Manual runs started
+with `Run workflow` on `main` remain available, using the GitHub
 `azure_trial_2` environment for both validation and deployment. CI authenticates with
 a PAT and creates the named CLI profile from the host secret; the token stays in
 environment variables. Deployment does not start a processing run. Configure
@@ -257,8 +259,8 @@ the intended workspace and PAT owner. The `ARM_*` secrets are
 no longer used by this workflow.
 
 To deploy manually, open Actions → Wikimedia CI/CD Pipeline → Run workflow and
-select `main`. Pushes, pull requests and manual runs on other branches do not
-deploy. The workflow checks the
+select `main`. Open pull requests and manual runs on other branches do not deploy.
+The workflow checks the
 PAT with `current-user me` before validating the bundle and deploying. Local tests
 use Python 3.12, Java 17, and the pinned dependencies in `tests/requirements-test.txt`.
 

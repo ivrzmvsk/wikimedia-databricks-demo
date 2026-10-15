@@ -41,6 +41,46 @@ def test_zerobus_filters_canaries_and_rejects_missing_source_ids():
         producer.normalize(event)
 
 
+@pytest.mark.parametrize("event_type", ["new", "log", "categorize", "external", None])
+def test_zerobus_skips_non_edit_events(event_type):
+    event = valid_event()
+    event["type"] = event_type
+    assert producer.normalize(event) is None
+
+
+def test_zerobus_capture_counts_only_edits(monkeypatch):
+    events = []
+    for index, event_type in enumerate(["new", "edit", "log", "edit"]):
+        event = valid_event()
+        event["type"] = event_type
+        event["meta"]["id"] = str(index)
+        events.append(SimpleNamespace(type="message", data=json.dumps(event)))
+    source = Mock()
+    source.__enter__ = Mock(return_value=events)
+    source.__exit__ = Mock(return_value=False)
+    monkeypatch.setattr(producer, "EventSource", Mock(return_value=source))
+    records = producer._read_capture(2, 120, producer.SOURCE)
+    assert [item["event_key"] for item in records] == ["1", "3"]
+
+
+def test_zerobus_rejects_non_edit_replay_before_sending(tmp_path, monkeypatch):
+    item = record()
+    payload = json.loads(item["event_json"])
+    payload["type"] = "log"
+    item["event_json"] = json.dumps(payload)
+    path = tmp_path / "old-capture.json"
+    path.write_text(json.dumps({
+        "target": "ivan_personal", "table": producer.table_name("ivan_personal"),
+        "records": [item],
+    }))
+    monkeypatch.setattr(producer, "credentials", Mock(return_value=("id", "secret")))
+    sender = Mock()
+    monkeypatch.setattr(producer, "send", sender)
+    with pytest.raises(ValueError, match="type='edit'"):
+        producer.main(["--replay", "--manifest", str(path)])
+    sender.assert_not_called()
+
+
 @pytest.mark.parametrize("payload", [None, [], {}, {"meta": []}])
 def test_zerobus_rejects_malformed_source_payloads(payload):
     with pytest.raises(ValueError):

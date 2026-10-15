@@ -1,4 +1,4 @@
-"""Capture Wikimedia events to a replay manifest and ingest with Zerobus."""
+"""Capture Wikimedia edit events to a replay manifest and ingest with Zerobus."""
 
 import argparse
 from contextlib import suppress
@@ -51,6 +51,8 @@ def normalize(change):
     if not isinstance(change, dict) or not isinstance(change.get("meta"), dict):
         raise ValueError("Expected a Wikimedia event with metadata")
     if change["meta"].get("domain") == "canary":
+        return None
+    if change.get("type") != "edit":
         return None
     event_key = change["meta"].get("id")
     if not isinstance(event_key, str) or not event_key.strip():
@@ -155,6 +157,8 @@ def validate_records(records):
             raise ValueError("Manifest payload must be a Wikimedia object")
         if payload["meta"].get("id") != event_key:
             raise ValueError("Manifest key must match payload meta.id")
+        if payload.get("type") != "edit":
+            raise ValueError("Manifest payload must have type='edit'; capture a new manifest")
         keys.add(event_key)
 
 

@@ -118,9 +118,11 @@ that update is expected to process its events. It is a bounded capture command,
 not an always-running daemon. `--timeout` defaults to 120 seconds and bounds
 connection setup and SSE capture, including heartbeat-only connections. Capture
 runs in a child process that is terminated at the deadline; process cleanup is
-bounded separately. Canary
-events are discarded; all other recent-change types are retained, as in the
-existing Event Hubs producer. Missing source IDs and malformed source events
+bounded separately. The Zerobus producer retains only events with `type = 'edit'`;
+canaries and other change types are discarded before writing the manifest or
+sending to Bronze. `--count` counts captured edits. Replay rejects manifests
+containing non-edit events; capture a new manifest instead. Existing table data
+is unchanged. Missing source IDs and malformed source events
 are skipped with a warning. Silver DQ still handles invalid analytics fields.
 
 ## Replay and failure handling

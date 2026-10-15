@@ -43,3 +43,18 @@ queries now use `dbr_dev.wikimedia_prod_gold`; each SELECT succeeded and returne
 data before publication. The saved draft was read back and matched the expected
 definition, preserving the layout and widget IDs. The publication API confirmed
 a newer revision with the same warehouse and individual data permissions.
+
+## Language views
+
+Both personal and Azure trial 2 dashboards were updated and republished on
+2026-10-15 to exclude `language_code IN ('commons', 'wikidata')` from all five
+language-specific datasets, including the nested top-language selection. These
+project codes previously appeared as `ISO: COMMONS` and `ISO: WIKIDATA`. Overall
+metrics and hourly activity still include their events. This is a dashboard
+filter; the dimension values and historical events remain unchanged.
+
+All ten affected SELECTs succeeded and their result rows contained neither
+label. Saved definitions matched the updates and publication metadata confirmed
+new revisions. Layout, widget IDs, warehouses, and data permission settings were
+preserved. The two target exports include the filters; the source export remains
+the original migration snapshot.
