@@ -3,6 +3,35 @@
 
 # COMMAND ----------
 
+# Staleness is monitored separately; an API outage must not block event processing
+# while a usable project dimension exists.
+try:
+    dimensions = spark.sql(f"""
+        SELECT
+            (SELECT COUNT(*) FROM {GOLD}.dim_date) AS dates,
+            (SELECT COUNT(*) FROM {GOLD}.dim_editor_type) AS editor_types,
+            (SELECT COUNT(*) FROM {GOLD}.dim_project
+                WHERE wiki_code <> 'unknown') AS projects,
+            (SELECT COUNT(*) FROM {GOLD}.dim_project
+                WHERE wiki_code = 'unknown') AS fallback_projects
+    """).first()
+except Exception as error:
+    raise RuntimeError(
+        "Gold dimensions are unavailable. Run wikimedia_setup "
+        "and run wikimedia_reference before the event job; check table permissions."
+    ) from error
+
+missing_dimensions = any(
+    dimensions[name] == 0 for name in ("dates", "editor_types", "projects")
+)
+if missing_dimensions or dimensions["fallback_projects"] != 1:
+    raise RuntimeError(
+        "Gold dimensions are empty or missing their unique fallback project. "
+        "Run wikimedia_setup and run wikimedia_reference before the event job."
+    )
+
+# COMMAND ----------
+
 spark.sql(f"""
 CREATE OR REPLACE TABLE {GOLD}.fact_wikipedia_edits AS
 SELECT

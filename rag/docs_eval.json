@@ -1,0 +1,161 @@
+[
+  {
+    "name": "Project overview",
+    "question": "What is the Wikimedia Databricks Lakehouse Demo for?",
+    "supported": true,
+    "expected_titles": [
+      "Wikimedia Databricks Lakehouse - Project Overview and Glossary"
+    ],
+    "answer_language": "en",
+    "answer_contains": []
+  },
+  {
+    "name": "Architecture",
+    "question": "Why is there only one persisted Bronze event table, and how does Silver read it?",
+    "supported": true,
+    "expected_titles": [
+      "Architecture and Data Flow"
+    ],
+    "answer_language": "en",
+    "answer_contains": []
+  },
+  {
+    "name": "Sources",
+    "question": "What does the Zerobus producer read and where does it send the events?",
+    "supported": true,
+    "expected_titles": [],
+    "answer_language": "en",
+    "answer_contains": [],
+    "expected_any_titles": [
+      "Data Sources - Wikimedia Events, SiteMatrix and Zerobus Producer",
+      "Architecture and Data Flow"
+    ]
+  },
+  {
+    "name": "Delivery semantics",
+    "question": "What delivery semantics does the Zerobus producer provide, and does flushing confirm that Silver processing has run?",
+    "supported": true,
+    "expected_titles": [
+      "Data Sources - Wikimedia Events, SiteMatrix and Zerobus Producer"
+    ],
+    "answer_language": "en",
+    "answer_contains": [
+      "once"
+    ]
+  },
+  {
+    "name": "DQ rules",
+    "question": "Какие пять правил качества проверяют Wikimedia events в Silver?",
+    "supported": true,
+    "expected_titles": [
+      "Bronze and Silver Layers - Parsing, Data Quality, Deduplication, Quarantine, SCD2"
+    ],
+    "answer_language": "ru",
+    "answer_contains": []
+  },
+  {
+    "name": "Gold model",
+    "question": "What are dim_date and dim_editor_type used for in the Gold model?",
+    "supported": true,
+    "expected_titles": [],
+    "answer_language": "en",
+    "answer_contains": [],
+    "expected_any_titles": [
+      "Gold Layer - Star Schema, Tables, Columns and Analytics Queries",
+      "Wikimedia Databricks Lakehouse - Project Overview and Glossary"
+    ]
+  },
+  {
+    "name": "Installation order",
+    "question": "В каком порядке запускать wikimedia_setup, wikimedia_reference и events при первой установке?",
+    "supported": true,
+    "expected_titles": [
+      "Jobs, Tasks, Schedules and First Installation Order"
+    ],
+    "answer_language": "ru",
+    "answer_contains": []
+  },
+  {
+    "name": "Governance",
+    "question": "Почему я вижу Jo*** вместо полного имени пользователя и какие группы видят исходные имена?",
+    "supported": true,
+    "expected_titles": [
+      "Unity Catalog Governance - Column Mask, Row Filter, Groups and Permissions"
+    ],
+    "answer_language": "ru",
+    "answer_contains": []
+  },
+  {
+    "name": "Freshness alert",
+    "question": "Under what data conditions does wikimedia_reference_freshness fire, and does it block event processing?",
+    "supported": true,
+    "expected_titles": [
+      "Data Quality Checks and SQL Alerts"
+    ],
+    "answer_language": "en",
+    "answer_contains": [
+      "48"
+    ]
+  },
+  {
+    "name": "Deployment targets",
+    "question": "What catalogs do the ivan_personal and azure_trial_2 bundle targets use?",
+    "supported": true,
+    "expected_titles": [
+      "Deployment with Asset Bundles, Targets, Variables and CI/CD"
+    ],
+    "answer_language": "en",
+    "answer_contains": [
+      "workspace",
+      "dbr_dev"
+    ]
+  },
+  {
+    "name": "Runbook",
+    "question": "What are the steps for the one-time inbox cutover from bronze_stream?",
+    "supported": true,
+    "expected_titles": [
+      "Operations Runbook - Troubleshooting, Inbox Cutover, Maintenance"
+    ],
+    "answer_language": "en",
+    "answer_contains": []
+  },
+  {
+    "name": "RAG operation",
+    "question": "What is a corpus generation fingerprint and why does the App filter by both corpus ID and generation?",
+    "supported": true,
+    "expected_titles": [
+      "RAG Assistant - Corpus, Tables, Index, App and Cost Controls"
+    ],
+    "answer_language": "en",
+    "answer_contains": []
+  },
+  {
+    "name": "SQL recipe",
+    "question": "Show the documented SQL recipe for bot share by language. Do not execute it.",
+    "supported": true,
+    "expected_titles": [
+      "Analytics Guide - Metrics and SQL Recipes over the Wikipedia Edit Data"
+    ],
+    "answer_language": "en",
+    "answer_contains": [
+      "SELECT",
+      "editor_type_key",
+      "GROUP BY"
+    ]
+  },
+  {
+    "name": "No live SQL counts",
+    "question": "What is the exact live number of rows in my Gold fact_wikipedia_edits table right now? Do not give a query; give the actual count.",
+    "supported": false,
+    "expected_titles": [],
+    "answer_language": "en"
+  },
+  {
+    "name": "No credentials",
+    "question": "What is the actual value of my Databricks client secret?",
+    "supported": false,
+    "expected_titles": [],
+    "answer_language": "en"
+  }
+]

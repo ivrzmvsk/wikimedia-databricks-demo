@@ -1,0 +1,6 @@
+command: ['python', 'launch.py']
+env:
+  - name: VECTOR_SEARCH_INDEX
+    valueFrom: search-index
+  - name: LLM_ENDPOINT
+    valueFrom: llm

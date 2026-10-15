@@ -1,0 +1,269 @@
+[
+  {
+    "name": "Поиск по смыслу",
+    "question": "Найди устройство хранения данных без движущихся частей.",
+    "supported": true,
+    "expected_titles": [
+      "Solid-state drive"
+    ],
+    "answer_language": "ru"
+  },
+  {
+    "name": "Необычный факт",
+    "question": "Найди десерт с консервированным томатным супом. Зачем добавляют суп?",
+    "supported": true,
+    "expected_titles": [
+      "Tomato soup cake"
+    ],
+    "answer_language": "ru"
+  },
+  {
+    "name": "Еда",
+    "question": "Из чего делают натто?",
+    "supported": true,
+    "expected_titles": [
+      "Natto"
+    ],
+    "answer_language": "ru"
+  },
+  {
+    "name": "Определение",
+    "question": "Какие три условия определяют планету по IAU и к какой системе относится это определение?",
+    "supported": true,
+    "expected_titles": [
+      "IAU definition of planet"
+    ],
+    "answer_language": "ru"
+  },
+  {
+    "name": "Поиск без названия",
+    "question": "В какой системе из нашей выборки планета обращается вокруг двух звёзд?",
+    "supported": true,
+    "expected_titles": [
+      "Kepler-16"
+    ],
+    "answer_language": "ru"
+  },
+  {
+    "name": "Два источника",
+    "question": "Сравни системы Kepler-16 и K2-155d: сколько звёзд они описывают и какие планеты упоминаются?",
+    "supported": true,
+    "expected_titles": [
+      "Kepler-16",
+      "K2-155d"
+    ],
+    "answer_language": "ru"
+  },
+  {
+    "name": "Сравнение",
+    "question": "Сравни натто и торт с томатным супом: из чего их делают?",
+    "supported": true,
+    "expected_titles": [
+      "Natto",
+      "Tomato soup cake"
+    ],
+    "answer_language": "ru"
+  },
+  {
+    "name": "Смартфоны",
+    "question": "Какой складной смартфон есть в выборке и когда его анонсировали?",
+    "supported": true,
+    "expected_titles": [
+      "Samsung Galaxy Z Fold 5"
+    ],
+    "answer_language": "ru"
+  },
+  {
+    "name": "Применение ИИ",
+    "question": "Найди компанию, применяющую ИИ к данным о движении судов. Для чего она это делает?",
+    "supported": true,
+    "expected_titles": [
+      "Windward (maritime AI company)"
+    ],
+    "answer_language": "ru"
+  },
+  {
+    "name": "Кино",
+    "question": "В каком фильме люди используют виртуальный мир OASIS и кто его режиссёр?",
+    "supported": true,
+    "expected_titles": [
+      "Ready Player One (film)"
+    ],
+    "answer_contains": [
+      "Ready Player One"
+    ],
+    "answer_language": "ru"
+  },
+  {
+    "name": "Нет точных данных",
+    "question": "Дай точный рецепт Tomato soup cake в граммах для каждого ингредиента.",
+    "supported": false,
+    "expected_titles": [],
+    "answer_language": "ru"
+  },
+  {
+    "name": "Нет исторического контекста",
+    "question": "Почему редактор внёс конкретную правку в статью Kepler-16?",
+    "supported": false,
+    "expected_titles": [],
+    "answer_language": "ru"
+  },
+  {
+    "name": "Не выдумывать жизнь",
+    "question": "Назови фамилии жителей K2-155d.",
+    "supported": false,
+    "expected_titles": [],
+    "answer_language": "ru"
+  },
+  {
+    "name": "Климат",
+    "question": "Почему изменение массы ледников используют как индикатор изменения климата?",
+    "supported": true,
+    "expected_titles": [
+      "Retreat of glaciers since 1850"
+    ],
+    "answer_language": "ru"
+  },
+  {
+    "name": "Biochemistry",
+    "question": "What does nitrogenase do?",
+    "supported": true,
+    "expected_titles": [
+      "Nitrogenase"
+    ],
+    "answer_language": "en"
+  },
+  {
+    "name": "Science",
+    "question": "Which element has the symbol Yb and what is its atomic number?",
+    "supported": true,
+    "expected_titles": [
+      "Ytterbium"
+    ],
+    "answer_language": "en"
+  },
+  {
+    "name": "Unusual sequencing",
+    "question": "What is transmission electron microscopy DNA sequencing?",
+    "supported": true,
+    "expected_titles": [
+      "Transmission electron microscopy DNA sequencing"
+    ],
+    "answer_language": "en"
+  },
+  {
+    "name": "Game creation",
+    "question": "What can players create and share in Super Mario Maker 2?",
+    "supported": true,
+    "expected_titles": [
+      "Super Mario Maker 2"
+    ],
+    "answer_language": "en"
+  },
+  {
+    "name": "Game history",
+    "question": "Who developed Marathon, and what kind of game is it?",
+    "supported": true,
+    "expected_titles": [
+      "Marathon (1994 video game)"
+    ],
+    "answer_language": "en"
+  },
+  {
+    "name": "Game technology",
+    "question": "What is Sierra Creative Interpreter used for?",
+    "supported": true,
+    "expected_titles": [
+      "Sierra Creative Interpreter"
+    ],
+    "answer_language": "en"
+  },
+  {
+    "name": "Planetary geography",
+    "question": "Where is Theia Mons located?",
+    "supported": true,
+    "expected_titles": [
+      "Theia Mons"
+    ],
+    "answer_language": "en"
+  },
+  {
+    "name": "Music",
+    "question": "Where did calypso music originate?",
+    "supported": true,
+    "expected_titles": [
+      "Calypso music"
+    ],
+    "answer_language": "en"
+  },
+  {
+    "name": "Marine wildlife",
+    "question": "What is a gray whale?",
+    "supported": true,
+    "expected_titles": [
+      "Gray whale"
+    ],
+    "answer_language": "en"
+  },
+  {
+    "name": "Animation",
+    "question": "Who produced Cars and who directed it?",
+    "supported": true,
+    "expected_titles": [
+      "Cars (film)"
+    ],
+    "answer_language": "en"
+  },
+  {
+    "name": "Aviation",
+    "question": "What kind of aircraft is the IAI Westwind?",
+    "supported": true,
+    "expected_titles": [
+      "IAI Westwind"
+    ],
+    "answer_language": "en"
+  },
+  {
+    "name": "History",
+    "question": "Who was Mansa Musa?",
+    "supported": true,
+    "expected_titles": [
+      "Mansa Musa"
+    ],
+    "answer_language": "en"
+  },
+  {
+    "name": "Deliberation",
+    "question": "What is a citizens' assembly and how are its members selected?",
+    "supported": true,
+    "expected_titles": [
+      "Citizens' assembly"
+    ],
+    "answer_language": "en"
+  },
+  {
+    "name": "Maps",
+    "question": "What is the Flyover feature in Apple Maps?",
+    "supported": true,
+    "expected_titles": [
+      "Flyover (Apple Maps)"
+    ],
+    "answer_language": "en"
+  },
+  {
+    "name": "Musician",
+    "question": "Which bands is Damon Albarn known for?",
+    "supported": true,
+    "expected_titles": [
+      "Damon Albarn"
+    ],
+    "answer_language": "en"
+  },
+  {
+    "name": "No editor motives (English)",
+    "question": "Why did the editor change the Mansa Musa article?",
+    "supported": false,
+    "expected_titles": [],
+    "answer_language": "en"
+  }
+]

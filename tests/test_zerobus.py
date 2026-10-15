@@ -181,7 +181,7 @@ def test_zerobus_setup_creates_external_inbox_and_grants():
     )
     sql = Mock()
     context = {"dbutils": SimpleNamespace(widgets=widgets), "spark": SimpleNamespace(sql=sql)}
-    for name in ("config.py", "setup.py"):
+    for name in ("config.py", "setup.py", "setup_inbox.py"):
         exec(compile((ROOT / "notebooks" / name).read_text(), name, "exec"), context)
     statements = [call.args[0] for call in sql.call_args_list]
     assert "zerobus_wikimedia_inbox" in statements[3]
@@ -191,16 +191,12 @@ def test_zerobus_setup_creates_external_inbox_and_grants():
     assert "SELECT, MODIFY" in statements[-1]
 
 
-def test_zerobus_pipeline_reads_inbox_without_eventhub_secrets(spark, monkeypatch):
+def test_silver_pipeline_reads_inbox_directly_without_persisting_another_bronze(spark, monkeypatch):
     import pyspark
 
-    expectations = {}
-
-    target = Mock(side_effect=lambda **kwargs: expectations.update(kwargs["expect_all"]))
-    flow = Mock(side_effect=lambda **kwargs: lambda function: function)
+    decorator = lambda **kwargs: lambda function: function
     dp = SimpleNamespace(
-        create_streaming_table=target,
-        append_flow=flow,
+        temporary_view=decorator, table=decorator, expect_all_or_drop=lambda rules: lambda f: f,
     )
     monkeypatch.setattr(pyspark, "pipelines", dp, raising=False)
     configuration = {
@@ -212,14 +208,12 @@ def test_zerobus_pipeline_reads_inbox_without_eventhub_secrets(spark, monkeypatc
         conf=SimpleNamespace(get=lambda name, default=None: configuration.get(name, default)),
         readStream=SimpleNamespace(table=read),
     )
-    path = ROOT / "pipelines/streaming_medallion/bronze_stream.py"
-    # dbutils is deliberately absent: no Event Hubs secret lookup is possible.
+    path = ROOT / "pipelines/streaming_medallion/silver_wikipedia_edits.py"
     context = {"spark": pipeline_spark, "__file__": str(path)}
     exec(compile(path.read_text(), str(path), "exec"), context)
-    bronze = context["bronze_stream"]()
+    silver = context["silver_wikipedia_edits_staging"]()
     read.assert_called_once_with("workspace.demo_bronze.zerobus_wikimedia_inbox")
-    assert bronze.first()._source == "zerobus_wikimedia_recentchange"
-    assert expectations == {"bronze_payload_present": "event_json IS NOT NULL"}
-    flow.assert_called_once_with(
-        target="workspace.demo_bronze.bronze_stream", name="zerobus_wikimedia_ingest"
-    )
+    row = silver.first()
+    assert row._source == "zerobus_wikimedia_recentchange"
+    assert row.meta_id == record()["event_key"]
+    assert row._dq_passed is True

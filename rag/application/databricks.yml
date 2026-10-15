@@ -1,0 +1,63 @@
+bundle:
+  name: wikimedia-rag-app
+  databricks_cli_version: '>= 1.1.0'
+  engine: direct
+workspace:
+  root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+sync:
+  include:
+    - assistant/app.py
+    - assistant/app.yaml
+    - assistant/retrieval.py
+    - assistant/launch.py
+    - assistant/requirements.txt
+    - assistant/runtime.json
+    - assistant/documents/rag_docs/**/*.md
+    - assistant/documents/rag_docs/*.md
+variables:
+  catalog:
+    default: workspace
+  ai_schema:
+    default: wikimediademo_ai
+  index_name:
+    default: ${var.catalog}.${var.ai_schema}.wikimedia_summary_index
+  app_name:
+    default: wikimedia-assistant-dev
+  embedding_endpoint:
+    default: databricks-qwen3-embedding-0-6b
+  llm_endpoint:
+    default: databricks-gemma-3-12b
+resources:
+  apps:
+    wikimedia_assistant:
+      name: ${var.app_name}
+      source_code_path: ./assistant
+      description: Wikimedia sample assistant with managed retrieval
+      resources:
+        - name: search-index
+          uc_securable:
+            securable_type: TABLE
+            securable_full_name: ${var.index_name}
+            permission: SELECT
+        - name: llm
+          serving_endpoint:
+            name: ${var.llm_endpoint}
+            permission: CAN_QUERY
+        - name: embeddings
+          serving_endpoint:
+            name: ${var.embedding_endpoint}
+            permission: CAN_QUERY
+targets:
+  ivan_personal:
+    default: true
+    workspace:
+      profile: personal-env
+  azure_trial_2:
+    workspace:
+      profile: azure_trial_2
+    variables:
+      app_name: wikimedia-assistant-azure
+      catalog: dbr_dev
+      ai_schema: wikimediademo_ai_azure
+      embedding_endpoint: ''
+      llm_endpoint: ''

@@ -38,3 +38,16 @@ dist/
 .DS_Store
 Thumbs.db
 *:Zone.Identifier
+
+# Sanitized Databricks App package built after successful RAG sync.
+rag/application/assistant/*
+.build/
+rag/**/.databricks/
+
+# Tool caches and local working files
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+*.log
+*.odp#
+.~lock.*#
