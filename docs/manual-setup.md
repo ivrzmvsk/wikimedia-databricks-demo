@@ -17,7 +17,9 @@ databricks bundle run -t ivan_personal wikimedia_medallion
 ```
 
 Run each command after the previous one succeeds. For Azure use
-`-t azure_trial_2` with its catalog and credentials. Deployment itself does not
+`-t azure_trial_2` with its catalog and credentials. PROD uses the separate
+`dbr_dev.wikimedia_prod_*` schemas and `wikimedia_prod_bronze.raw_events`.
+See [PROD isolation](prod-isolation.md) when preserving legacy Azure history. Deployment itself does not
 execute setup or processing. Catalogs and governance account groups must exist.
 
 Job notebook parameters come from bundle variables: catalog, Bronze/Silver/Gold

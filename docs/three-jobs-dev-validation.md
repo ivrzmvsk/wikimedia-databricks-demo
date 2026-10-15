@@ -44,3 +44,24 @@ IDs. The run/task names above describe the executed validation runs; see
 [job responsibilities](jobs.md) for current names. The naming-only deployment
 passed five bundle tests, lint, strict validation, and a read-back comparison of
 all deployed task keys/dependencies. No processing rerun was needed for renaming.
+
+## Redeployment after PROD isolation — 2026-10-15
+
+The latest bundle was deployed again to `ivan_personal`. Validation passed and
+the plan retained the existing job/pipeline IDs. All three jobs were executed:
+
+| Job | Run ID | Result |
+| --- | --- | --- |
+| Setup | `993451888279703` | SUCCESS |
+| Reference | `402825457224527` | SUCCESS |
+| Events | `857380627713212` | SUCCESS |
+
+Read-back checks confirmed that notebook parameters and the streaming pipeline
+still use catalog `workspace`, schemas `wikimediademo_*`, and raw table
+`zerobus_wikimedia_inbox`. PROD schema overrides did not affect DEV.
+
+Final counts: raw 13,140; Silver 12,903; quarantine 172; Gold 12,903; project
+dimension 1,074. Gold quality checks passed and masking/row filtering remained
+attached. Processing schedules remain paused. This run verified existing data
+processing, without a new producer send. Local run/configuration reports are in
+the ignored `.state/personal-redeploy-validation/` directory.

@@ -15,6 +15,9 @@ sync:
     - notebooks
 
 variables:
+  raw_events_table:
+    description: Raw event table name inside the Bronze schema.
+    default: zerobus_wikimedia_inbox
   job_email_notifications:
     description: Job email notifications, e.g. on_failure recipients; empty until configured.
     type: complex
@@ -59,8 +62,13 @@ targets:
   azure_trial_2:
     workspace:
       profile: azure_trial_2
-      root_path: /Workspace/Shared/.bundle/${bundle.name}/${bundle.target}
+      root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
     variables:
       catalog: dbr_dev
+      bronze_schema: wikimedia_prod_bronze
+      silver_schema: wikimedia_prod_silver
+      gold_schema: wikimedia_prod_gold
+      raw_events_table: raw_events
+      warehouse_id: d8b8ff9942968cb8
     presets:
       trigger_pause_status: PAUSED

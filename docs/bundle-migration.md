@@ -29,46 +29,17 @@ and rebuild Gold. Retire the old Bronze table only after coverage checks pass.
 Existing Azure deployments require their own migration; the DEV cutover does not
 migrate Azure history automatically.
 
-## Choose how to handle existing Azure table ownership
+## Current PROD table isolation
 
-If existing tables are already owned by manually created Lakeflow pipelines,
-use the existing pipeline IDs to bind those pipelines into bundle state before
-deploying. Use the same identity/profile and variables that CI will use:
+The `azure_trial_2` PROD target uses `dbr_dev.wikimedia_prod_bronze`,
+`wikimedia_prod_silver`, and `wikimedia_prod_gold`, with the raw event table
+`raw_events`. It does not adopt or overwrite shared `wikimediademo_*` tables.
+Old event JSON is read and copied into the new raw table; old reference history
+remains available in its legacy table. See [PROD isolation](prod-isolation.md).
 
-```bash
-databricks bundle deployment bind wikimedia_streaming_medallion <stream-pipeline-id> -t azure_trial_2
-databricks bundle deployment bind wikimedia_batch_medallion <batch-pipeline-id> -t azure_trial_2
-databricks bundle validate -t azure_trial_2 --strict
-```
-
-Review the bound pipeline configuration before deployment: the bundle uses
-serverless compute, triggered mode, and the files under `pipelines/`. Binding
-preserves the resource identity; it does not make incompatible data/state changes
-safe. In particular, batch CDC now consumes snapshots rather than a stream of
-materialized-view updates. An existing CDC target may require a separately
-planned rebuild because its sequencing/system-column types can differ. Do not
-force a full refresh of an existing SCD2 table without preserving the history you
-need. The streaming pipeline keeps its existing deduplication behavior.
-
-A table created by an old notebook is not an adoptable pipeline resource. If
-those tables occupy the target names, use new schema names for the first bundle
-run, validate the outputs, and plan the consumer cutover. For example:
-
-```bash
-export BUNDLE_VAR_bronze_schema=wikimediademo_bundle_bronze
-export BUNDLE_VAR_silver_schema=wikimediademo_bundle_silver
-export BUNDLE_VAR_gold_schema=wikimediademo_bundle_gold
-```
-
-These variables also redirect the Gold notebooks and alert queries. Keep the
-settings consistent in CI and all subsequent commands. The streaming pipeline
-reads the Zerobus inbox. New schemas do not contain old Event Hubs history;
-plan a separate historical load if it is needed.
-
-Do not run the legacy streaming consumers and bundle pipelines against the same
-target tables. Stop legacy schedules at cutover after validating the new flow.
-This repository does not stop, drop, rename, or overwrite existing cloud resources
-as part of the code migration.
+Do not bind pipelines owned by other users or change their table properties to
+work around ownership errors. The target retains its own existing job/pipeline
+IDs and creates new datasets in schemas owned by the deployment identity.
 
 ## Optional adoption of existing jobs and alerts
 
@@ -91,11 +62,11 @@ must be configured explicitly if notifications are needed.
 1. Configure repository Actions secrets `DATABRICKS_HOST`, `DATABRICKS_TOKEN`, and
    `DATABRICKS_SQL_WAREHOUSE_ID`, and create the GitHub `azure_trial_2` environment.
    Use a stable PAT owner. The Azure target now uses
-   `/Workspace/Shared/.bundle/wikimedia-databricks-demo/azure_trial_2` with no
-   deployment mode or username in the path. Moving from
-   the previous user folder changes the bundle state path; bind existing resources
-   before deployment if you intend to adopt them instead of creating a second set.
-2. Bind compatible existing resources or choose unused schemas.
+   `/Workspace/Users/<deploying-identity>/.bundle/wikimedia-databricks-demo/azure_trial_2`.
+   Use the same identity and state path locally and in CI. The Shared-root
+   deployment is legacy; verify the existing resource IDs are retained when moving state.
+2. Verify the three existing jobs/two pipelines are retained and the target uses
+   only the new `wikimedia_prod_*` schemas. Old shared tables are read-only sources.
 3. Validate and deploy `azure_trial_2` with schedules paused.
 4. Complete manual setup as needed, then run `wikimedia_reference` and
    `wikimedia_medallion`; inspect their checks; setup applies governance before processing.

@@ -27,11 +27,15 @@ SOURCE = "https://stream.wikimedia.org/v2/stream/recentchange"
 LOGGER = logging.getLogger(__name__)
 
 
-def table_name(target, bronze_schema):
-    # Catalog and workspace are pinned together; only the project's schema varies.
-    if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", bronze_schema):
-        raise ValueError("bronze-schema must be a simple SQL identifier")
-    return f"{TARGETS[target]['catalog']}.{bronze_schema}.zerobus_wikimedia_inbox"
+def table_name(target, bronze_schema=None):
+    # Catalog/workspace are pinned together. Defaults match the bundle target.
+    config = TARGETS[target]
+    bronze_schema = bronze_schema or config.get("bronze_schema", "wikimediademo_bronze")
+    raw_events_table = config.get("raw_events_table", "zerobus_wikimedia_inbox")
+    for value in (bronze_schema, raw_events_table):
+        if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", value):
+            raise ValueError("Bronze schema and raw table must be simple SQL identifiers")
+    return f"{config['catalog']}.{bronze_schema}.{raw_events_table}"
 
 
 def credentials(env_file):
@@ -182,7 +186,7 @@ def send(records, target, bronze_schema, auth):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--target", choices=tuple(TARGETS), default="ivan_personal")
-    parser.add_argument("--bronze-schema", default="wikimediademo_bronze")
+    parser.add_argument("--bronze-schema", help="Override the target Bronze schema")
     parser.add_argument("--env-file", type=Path)
     parser.add_argument("--count", type=int, default=100)
     parser.add_argument("--timeout", type=int, default=120)

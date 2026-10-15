@@ -13,7 +13,7 @@ explicit flush acknowledgment as `../databricks-dev-lab/lab11`.
 Wikimedia recentchange SSE
   → producer/zerobus/producer.py
   → Zerobus Ingest
-  → <catalog>.<bronze_schema>.zerobus_wikimedia_inbox (the sole event Bronze table)
+  → <catalog>.<bronze_schema>.<raw_events_table> (the sole event Bronze table)
   → Lakeflow: Silver edits + quarantine
   → existing Gold workflow
 ```
@@ -54,8 +54,10 @@ Local `.env.*` files and `.state/` replay manifests are Git-ignored;
 `producer/zerobus/.env.example` contains empty placeholders only.
 
 Hosts, endpoints and catalogs are pinned per target in
-`producer/zerobus/targets.json`. That file contains no credentials. Change the
-configuration deliberately if a workspace changes. The producer cannot override
+`producer/zerobus/targets.json`. That file contains no credentials. PROD also pins
+its default Bronze schema to `wikimedia_prod_bronze` and table to `raw_events`;
+DEV retains `wikimediademo_bronze.zerobus_wikimedia_inbox`. Change configuration
+deliberately if a workspace changes. The producer cannot override
 the catalog independently of its target. It accepts `--bronze-schema` so its
 destination can match the bundle's schema variable.
 

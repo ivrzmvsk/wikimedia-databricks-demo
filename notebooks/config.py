@@ -15,6 +15,7 @@ for parameter in ("catalog", "bronze_schema", "silver_schema", "gold_schema"):
     dbutils.widgets.text(parameter, "")
 
 for parameter, default in (
+    ("raw_events_table", "zerobus_wikimedia_inbox"),
     ("zerobus_service_principal", ""),
     ("data_engineers_group", "data_engineers"),
     ("admins_group", "admins"),
