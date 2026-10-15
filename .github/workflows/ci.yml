@@ -124,3 +124,6 @@ jobs:
           DATABRICKS_TERRAFORM_EXEC_PATH: /usr/local/bin/terraform
         run: |
           databricks bundle deploy -t azure_trial_2
+
+      - name: Run Setup Job
+        run: databricks bundle run -t azure_trial_2 wikimedia_setup
