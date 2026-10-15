@@ -243,7 +243,10 @@ deploy `azure_trial_2`. Direct pushes to `main` also deploy. Manual runs started
 with `Run workflow` on `main` remain available, using the GitHub
 `azure_trial_2` environment for both validation and deployment. CI authenticates with
 a PAT and creates the named CLI profile from the host secret; the token stays in
-environment variables. Deployment does not start a processing run. Configure
+environment variables. After deployment, CI runs `wikimedia_setup` and waits for
+completion; a setup failure fails the workflow. Reference and event processing
+remain separate runs. The deploy job's concurrency lock covers both deployment
+and setup. Configure
 these repository Actions secrets under Settings → Secrets and variables → Actions:
 
 - `DATABRICKS_HOST`
