@@ -71,9 +71,13 @@ def test_targets_use_requested_profiles_and_catalogs():
     assert bundle["variables"]["catalog"]["default"] == "workspace"
     assert azure["workspace"]["profile"] == "azure_trial_2"
     assert azure["workspace"]["root_path"] == (
-        "/Workspace/Shared/.bundle/${bundle.name}/${bundle.target}"
+        "/Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}"
     )
     assert azure["variables"]["catalog"] == "dbr_dev"
+    assert azure["variables"]["bronze_schema"] == "wikimedia_prod_bronze"
+    assert azure["variables"]["silver_schema"] == "wikimedia_prod_silver"
+    assert azure["variables"]["gold_schema"] == "wikimedia_prod_gold"
+    assert azure["variables"]["raw_events_table"] == "raw_events"
     assert azure["presets"]["trigger_pause_status"] == "PAUSED"
     assert ivan_personal["mode"] == "development"
     assert "mode" not in azure

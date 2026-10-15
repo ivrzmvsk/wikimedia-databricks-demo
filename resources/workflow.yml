@@ -26,6 +26,7 @@ resources:
               zerobus_service_principal: ${var.zerobus_service_principal}
               catalog: ${var.catalog}
               bronze_schema: ${var.bronze_schema}
+              raw_events_table: ${var.raw_events_table}
               silver_schema: ${var.silver_schema}
               gold_schema: ${var.gold_schema}
               data_engineers_group: ${var.data_engineers_group}

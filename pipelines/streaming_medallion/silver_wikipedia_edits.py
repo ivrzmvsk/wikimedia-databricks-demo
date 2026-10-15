@@ -38,7 +38,8 @@ from wikimedia_stream.transforms import decode_zerobus_events, parse_bronze_to_s
 CATALOG_NAME = spark.conf.get("wikimedia.catalog", "dbr_dev")
 BRONZE_SCHEMA_NAME = spark.conf.get("wikimedia.bronze_schema", "wikimediademo_bronze")
 SILVER_SCHEMA_NAME = spark.conf.get("wikimedia.silver_schema", "wikimediademo_silver")
-ZEROBUS_INBOX_TABLE = f"{CATALOG_NAME}.{BRONZE_SCHEMA_NAME}.zerobus_wikimedia_inbox"
+RAW_EVENTS_TABLE_NAME = spark.conf.get("wikimedia.raw_events_table", "zerobus_wikimedia_inbox")
+ZEROBUS_INBOX_TABLE = f"{CATALOG_NAME}.{BRONZE_SCHEMA_NAME}.{RAW_EVENTS_TABLE_NAME}"
 SILVER_EDITS_TABLE = f"{CATALOG_NAME}.{SILVER_SCHEMA_NAME}.silver_wikipedia_edits"
 SILVER_QUARANTINE_TABLE = (
     f"{CATALOG_NAME}.{SILVER_SCHEMA_NAME}.silver_wikipedia_edits_quarantine"

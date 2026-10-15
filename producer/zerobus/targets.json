@@ -11,6 +11,8 @@
     "warehouse_id": "d8b8ff9942968cb8",
     "host": "https://adb-7405618361895520.0.azuredatabricks.net",
     "endpoint": "https://7405618361895520.zerobus.eastus.azuredatabricks.net",
-    "catalog": "dbr_dev"
+    "catalog": "dbr_dev",
+    "bronze_schema": "wikimedia_prod_bronze",
+    "raw_events_table": "raw_events"
   }
 }

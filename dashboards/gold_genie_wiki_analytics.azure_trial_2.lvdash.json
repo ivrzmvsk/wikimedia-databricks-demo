@@ -1,0 +1,1189 @@
+{
+  "datasets": [
+    {
+      "name": "da258172",
+      "displayName": "Multi-Language Project Activity - Top 20 Languages",
+      "queryLines": [
+        "\n",
+        "SELECT \n",
+        "    p.`language_name`,\n",
+        "    COUNT(DISTINCT p.`project_key`) as project_count,\n",
+        "    COUNT(*) as total_edits,\n",
+        "    COUNT(DISTINCT f.`user`) as active_editors,\n",
+        "    COUNT(DISTINCT f.`title`) as pages_edited,\n",
+        "    SUM(f.`byte_change`) as net_content_change,\n",
+        "    AVG(f.`abs_byte_change`) as avg_edit_size\n",
+        "FROM `dbr_dev`.`wikimedia_prod_gold`.`fact_wikipedia_edits` f\n",
+        "JOIN `dbr_dev`.`wikimedia_prod_gold`.`dim_project` p ON f.`project_key` = p.`project_key`\n",
+        "WHERE p.`language_name` IS NOT NULL\n",
+        "GROUP BY p.`language_name`\n",
+        "ORDER BY total_edits DESC\n",
+        "LIMIT 20\n"
+      ]
+    },
+    {
+      "name": "75115709",
+      "displayName": "Hourly Activity Patterns - Edit Volume by Hour",
+      "queryLines": [
+        "\n",
+        "SELECT \n",
+        "    HOUR(`event_time`) as hour_of_day,\n",
+        "    COUNT(*) as edit_count,\n",
+        "    AVG(`abs_byte_change`) as avg_edit_size,\n",
+        "    COUNT(DISTINCT `user`) as active_users,\n",
+        "    SUM(CASE WHEN `byte_change` > 0 THEN 1 ELSE 0 END) as additions,\n",
+        "    SUM(CASE WHEN `byte_change` < 0 THEN 1 ELSE 0 END) as deletions\n",
+        "FROM `dbr_dev`.`wikimedia_prod_gold`.`fact_wikipedia_edits`\n",
+        "GROUP BY HOUR(`event_time`)\n",
+        "ORDER BY hour_of_day\n"
+      ]
+    },
+    {
+      "name": "5191e110",
+      "displayName": "Hourly Activity Patterns - Edits vs Active Users",
+      "queryLines": [
+        "\n",
+        "SELECT \n",
+        "    HOUR(`event_time`) as hour_of_day,\n",
+        "    COUNT(*) as edit_count,\n",
+        "    COUNT(DISTINCT `user`) as active_users\n",
+        "FROM `dbr_dev`.`wikimedia_prod_gold`.`fact_wikipedia_edits`\n",
+        "GROUP BY HOUR(`event_time`)\n",
+        "ORDER BY hour_of_day\n"
+      ]
+    },
+    {
+      "name": "544be9a0",
+      "displayName": "Project Diversity & Coverage - Key Metrics",
+      "queryLines": [
+        "\n",
+        "SELECT \n",
+        "    'Total Edits' as metric,\n",
+        "    COUNT(*) as value\n",
+        "FROM `dbr_dev`.`wikimedia_prod_gold`.`fact_wikipedia_edits`\n",
+        "UNION ALL\n",
+        "SELECT \n",
+        "    'Unique Editors' as metric,\n",
+        "    COUNT(DISTINCT `user`) as value\n",
+        "FROM `dbr_dev`.`wikimedia_prod_gold`.`fact_wikipedia_edits`\n",
+        "UNION ALL\n",
+        "SELECT \n",
+        "    'Pages Edited' as metric,\n",
+        "    COUNT(DISTINCT `title`) as value\n",
+        "FROM `dbr_dev`.`wikimedia_prod_gold`.`fact_wikipedia_edits`\n",
+        "UNION ALL\n",
+        "SELECT \n",
+        "    'Active Projects' as metric,\n",
+        "    COUNT(DISTINCT `project_key`) as value\n",
+        "FROM `dbr_dev`.`wikimedia_prod_gold`.`fact_wikipedia_edits`\n",
+        "UNION ALL\n",
+        "SELECT \n",
+        "    'Net Bytes Added (MB)' as metric,\n",
+        "    CAST(SUM(`byte_change`) / 1048576.0 AS BIGINT) as value\n",
+        "FROM `dbr_dev`.`wikimedia_prod_gold`.`fact_wikipedia_edits`\n",
+        "UNION ALL\n",
+        "SELECT \n",
+        "    'Avg Edit Size (bytes)' as metric,\n",
+        "    CAST(AVG(`abs_byte_change`) AS BIGINT) as value\n",
+        "FROM `dbr_dev`.`wikimedia_prod_gold`.`fact_wikipedia_edits`\n"
+      ]
+    },
+    {
+      "name": "c0c99c3f",
+      "displayName": "Bot vs Human Editor Performance Comparison",
+      "queryLines": [
+        "\n",
+        "SELECT \n",
+        "    et.`editor_type_desc`,\n",
+        "    COUNT(*) as edit_count,\n",
+        "    COUNT(DISTINCT f.`user`) as unique_editors,\n",
+        "    AVG(f.`abs_byte_change`) as avg_edit_size,\n",
+        "    SUM(CASE WHEN f.`is_minor_edit` = true THEN 1 ELSE 0 END) as minor_edits,\n",
+        "    SUM(CASE WHEN f.`byte_change` > 0 THEN 1 ELSE 0 END) as additions,\n",
+        "    SUM(CASE WHEN f.`byte_change` < 0 THEN 1 ELSE 0 END) as deletions,\n",
+        "    SUM(f.`byte_change`) as net_bytes_added,\n",
+        "    COUNT(DISTINCT f.`title`) as pages_edited\n",
+        "FROM `dbr_dev`.`wikimedia_prod_gold`.`fact_wikipedia_edits` f\n",
+        "JOIN `dbr_dev`.`wikimedia_prod_gold`.`dim_editor_type` et ON f.`editor_type_key` = et.`editor_type_key`\n",
+        "GROUP BY et.`editor_type_desc`\n"
+      ]
+    },
+    {
+      "name": "89424d1b",
+      "displayName": "Bot vs Human Detailed Breakdown by Language",
+      "queryLines": [
+        "\n",
+        "SELECT \n",
+        "    p.`language_name`,\n",
+        "    SUM(CASE WHEN et.`editor_type_desc` = 'Bot' THEN 1 ELSE 0 END) as bot_edits,\n",
+        "    SUM(CASE WHEN et.`editor_type_desc` = 'Human' THEN 1 ELSE 0 END) as human_edits,\n",
+        "    COUNT(DISTINCT CASE WHEN et.`editor_type_desc` = 'Bot' THEN f.`user` END) as bot_editors,\n",
+        "    COUNT(DISTINCT CASE WHEN et.`editor_type_desc` = 'Human' THEN f.`user` END) as human_editors,\n",
+        "    ROUND(AVG(CASE WHEN et.`editor_type_desc` = 'Bot' THEN f.`abs_byte_change` END), 0) as bot_avg_edit_size,\n",
+        "    ROUND(AVG(CASE WHEN et.`editor_type_desc` = 'Human' THEN f.`abs_byte_change` END), 0) as human_avg_edit_size,\n",
+        "    ROUND(100.0 * SUM(CASE WHEN et.`editor_type_desc` = 'Bot' THEN 1 ELSE 0 END) / COUNT(*), 1) as bot_percentage\n",
+        "FROM `dbr_dev`.`wikimedia_prod_gold`.`fact_wikipedia_edits` f\n",
+        "JOIN `dbr_dev`.`wikimedia_prod_gold`.`dim_project` p ON f.`project_key` = p.`project_key`\n",
+        "JOIN `dbr_dev`.`wikimedia_prod_gold`.`dim_editor_type` et ON f.`editor_type_key` = et.`editor_type_key`\n",
+        "WHERE p.`language_name` IS NOT NULL\n",
+        "GROUP BY p.`language_name`\n",
+        "ORDER BY (bot_edits + human_edits) DESC\n",
+        "LIMIT 12\n"
+      ]
+    },
+    {
+      "name": "aa984518",
+      "displayName": "Editor Productivity: Edits per Editor by Language & Type",
+      "queryLines": [
+        "\n",
+        "SELECT \n",
+        "    p.`language_name`,\n",
+        "    et.`editor_type_desc`,\n",
+        "    COUNT(DISTINCT f.`user`) as unique_editors,\n",
+        "    COUNT(*) as edit_count,\n",
+        "    CAST(COUNT(*) * 1.0 / COUNT(DISTINCT f.`user`) AS DECIMAL(10,1)) as edits_per_editor\n",
+        "FROM `dbr_dev`.`wikimedia_prod_gold`.`fact_wikipedia_edits` f\n",
+        "JOIN `dbr_dev`.`wikimedia_prod_gold`.`dim_project` p ON f.`project_key` = p.`project_key`\n",
+        "JOIN `dbr_dev`.`wikimedia_prod_gold`.`dim_editor_type` et ON f.`editor_type_key` = et.`editor_type_key`\n",
+        "WHERE p.`language_name` IS NOT NULL\n",
+        "  AND p.`language_name` IN ('English', 'French', 'German', 'Spanish', 'Russian', 'Italian', 'Chinese', 'Japanese', 'Arabic', 'Portuguese')\n",
+        "GROUP BY p.`language_name`, et.`editor_type_desc`\n",
+        "ORDER BY p.`language_name`, et.`editor_type_desc`\n"
+      ]
+    },
+    {
+      "name": "f0f69a8c",
+      "displayName": "Bot vs Human Edit Distribution - Stacked 100% View",
+      "queryLines": [
+        "\n",
+        "SELECT \n",
+        "    p.`language_name`,\n",
+        "    SUM(CASE WHEN et.`editor_type_desc` = 'Bot' THEN 1 ELSE 0 END) as bot_edits,\n",
+        "    SUM(CASE WHEN et.`editor_type_desc` = 'Human' THEN 1 ELSE 0 END) as human_edits,\n",
+        "    COUNT(*) as total_edits,\n",
+        "    ROUND(100.0 * SUM(CASE WHEN et.`editor_type_desc` = 'Bot' THEN 1 ELSE 0 END) / COUNT(*), 1) as bot_percentage,\n",
+        "    ROUND(100.0 * SUM(CASE WHEN et.`editor_type_desc` = 'Human' THEN 1 ELSE 0 END) / COUNT(*), 1) as human_percentage\n",
+        "FROM `dbr_dev`.`wikimedia_prod_gold`.`fact_wikipedia_edits` f\n",
+        "JOIN `dbr_dev`.`wikimedia_prod_gold`.`dim_project` p ON f.`project_key` = p.`project_key`\n",
+        "JOIN `dbr_dev`.`wikimedia_prod_gold`.`dim_editor_type` et ON f.`editor_type_key` = et.`editor_type_key`\n",
+        "WHERE p.`language_name` IS NOT NULL\n",
+        "GROUP BY p.`language_name`\n",
+        "ORDER BY total_edits DESC\n",
+        "LIMIT 15\n"
+      ]
+    },
+    {
+      "name": "793390c8",
+      "displayName": "Bot vs Human Edits - Side-by-Side Comparison",
+      "queryLines": [
+        "\n",
+        "SELECT \n",
+        "    p.`language_name`,\n",
+        "    et.`editor_type_desc`,\n",
+        "    COUNT(*) as edit_count\n",
+        "FROM `dbr_dev`.`wikimedia_prod_gold`.`fact_wikipedia_edits` f\n",
+        "JOIN `dbr_dev`.`wikimedia_prod_gold`.`dim_project` p ON f.`project_key` = p.`project_key`\n",
+        "JOIN `dbr_dev`.`wikimedia_prod_gold`.`dim_editor_type` et ON f.`editor_type_key` = et.`editor_type_key`\n",
+        "WHERE p.`language_name` IS NOT NULL\n",
+        "  AND p.`language_name` IN (\n",
+        "    SELECT p2.`language_name`\n",
+        "    FROM `dbr_dev`.`wikimedia_prod_gold`.`fact_wikipedia_edits` f2\n",
+        "    JOIN `dbr_dev`.`wikimedia_prod_gold`.`dim_project` p2 ON f2.`project_key` = p2.`project_key`\n",
+        "    WHERE p2.`language_name` IS NOT NULL\n",
+        "    GROUP BY p2.`language_name`\n",
+        "    ORDER BY COUNT(*) DESC\n",
+        "    LIMIT 15\n",
+        "  )\n",
+        "GROUP BY p.`language_name`, et.`editor_type_desc`\n",
+        "ORDER BY p.`language_name`, et.`editor_type_desc`\n"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "34540dc7",
+      "displayName": "Wiki edits analytics",
+      "layout": [
+        {
+          "widget": {
+            "name": "816dde66",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "da258172",
+                  "fields": [
+                    {
+                      "name": "active_editors",
+                      "expression": "`active_editors`"
+                    },
+                    {
+                      "name": "total_edits",
+                      "expression": "`total_edits`"
+                    },
+                    {
+                      "name": "language_name",
+                      "expression": "`language_name`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Multi-Language Project Activity - Top 20 Languages",
+                  "fields": []
+                }
+              },
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "total_edits",
+                  "axis": {
+                    "title": "Total Edits"
+                  },
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    }
+                  },
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "fieldName": "language_name",
+                  "axis": {
+                    "title": "Language"
+                  },
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "custom-order",
+                      "orderedValues": [
+                        "Other / Technical",
+                        "English",
+                        "Chechen",
+                        "Basque",
+                        "French",
+                        "German",
+                        "Greek",
+                        "Spanish",
+                        "Russian",
+                        "Catalan",
+                        "Arabic",
+                        "Italian",
+                        "Chinese",
+                        "Polish",
+                        "Azerbaijani",
+                        "Japanese",
+                        "Dutch",
+                        "Ukrainian",
+                        "Persian",
+                        "Portuguese"
+                      ]
+                    }
+                  }
+                },
+                "color": {
+                  "fieldName": "active_editors",
+                  "legend": {
+                    "position": "right",
+                    "title": "Active Editors"
+                  },
+                  "displayName": "Active Editors",
+                  "scale": {
+                    "type": "quantitative",
+                    "colorRamp": {
+                      "mode": "single-hue",
+                      "baseColor": {
+                        "position": 1,
+                        "themeColorType": "visualizationColors"
+                      }
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "d51f5f9f",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "5191e110",
+                  "fields": [
+                    {
+                      "name": "hour_of_day",
+                      "expression": "`hour_of_day`"
+                    },
+                    {
+                      "name": "edit_count",
+                      "expression": "`edit_count`"
+                    },
+                    {
+                      "name": "active_users",
+                      "expression": "`active_users`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Hourly Activity Patterns - Edits vs Active Users"
+              },
+              "mark": {
+                "colors": [
+                  "#077A9D",
+                  "#FFAB00"
+                ]
+              },
+              "version": 1,
+              "widgetType": "combo",
+              "encodings": {
+                "x": {
+                  "fieldName": "hour_of_day",
+                  "axis": {
+                    "title": "Hour of Day (UTC)"
+                  },
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "primary": {
+                    "fields": [
+                      {
+                        "fieldName": "edit_count",
+                        "displayName": "Edit Count"
+                      }
+                    ],
+                    "scale": {
+                      "type": "quantitative"
+                    },
+                    "axis": {
+                      "title": "Edit Count"
+                    },
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "compact",
+                      "decimalPlaces": {
+                        "type": "exact",
+                        "places": 1
+                      }
+                    }
+                  },
+                  "secondary": {
+                    "fields": [
+                      {
+                        "fieldName": "active_users",
+                        "displayName": "Active Users"
+                      }
+                    ],
+                    "scale": {
+                      "type": "quantitative"
+                    },
+                    "axis": {
+                      "title": "Active Users"
+                    },
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "exact",
+                        "places": 0
+                      }
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 2,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "683e9ee3",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "c0c99c3f",
+                  "fields": [
+                    {
+                      "name": "editor_type_desc",
+                      "expression": "`editor_type_desc`"
+                    },
+                    {
+                      "name": "edit_count",
+                      "expression": "`edit_count`"
+                    },
+                    {
+                      "name": "unique_editors",
+                      "expression": "`unique_editors`"
+                    },
+                    {
+                      "name": "avg_edit_size",
+                      "expression": "`avg_edit_size`"
+                    },
+                    {
+                      "name": "minor_edits",
+                      "expression": "`minor_edits`"
+                    },
+                    {
+                      "name": "net_bytes_added",
+                      "expression": "`net_bytes_added`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Bot vs Human Editor Performance Comparison",
+                  "fields": []
+                }
+              },
+              "bandedRows": {
+                "enabled": true
+              },
+              "version": 2,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "editor_type_desc",
+                    "displayName": "Editor Type",
+                    "style": {
+                      "type": "basic",
+                      "bold": true
+                    }
+                  },
+                  {
+                    "fieldName": "edit_count",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "compact",
+                      "decimalPlaces": {
+                        "type": "exact",
+                        "places": 1
+                      }
+                    },
+                    "displayName": "Total Edits"
+                  },
+                  {
+                    "fieldName": "unique_editors",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "compact",
+                      "decimalPlaces": {
+                        "type": "exact",
+                        "places": 0
+                      }
+                    },
+                    "displayName": "Unique Editors"
+                  },
+                  {
+                    "fieldName": "avg_edit_size",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "exact",
+                        "places": 0
+                      }
+                    },
+                    "displayName": "Avg Edit Size (bytes)",
+                    "style": {
+                      "type": "basic",
+                      "rules": [
+                        {
+                          "condition": {
+                            "operand": {
+                              "type": "data-value",
+                              "value": "500"
+                            },
+                            "operator": ">"
+                          },
+                          "foregroundColor": "#077A9D",
+                          "bold": true
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "fieldName": "minor_edits",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "compact",
+                      "decimalPlaces": {
+                        "type": "exact",
+                        "places": 1
+                      }
+                    },
+                    "displayName": "Minor Edits"
+                  },
+                  {
+                    "fieldName": "net_bytes_added",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "compact",
+                      "decimalPlaces": {
+                        "type": "exact",
+                        "places": 1
+                      }
+                    },
+                    "displayName": "Net Bytes Added",
+                    "style": {
+                      "type": "basic",
+                      "rules": [
+                        {
+                          "condition": {
+                            "operand": {
+                              "type": "data-value",
+                              "value": "20000000"
+                            },
+                            "operator": ">"
+                          },
+                          "foregroundColor": "#00A972",
+                          "bold": true
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 12,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "58560f97",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "89424d1b",
+                  "fields": [
+                    {
+                      "name": "language_name",
+                      "expression": "`language_name`"
+                    },
+                    {
+                      "name": "bot_edits",
+                      "expression": "`bot_edits`"
+                    },
+                    {
+                      "name": "human_edits",
+                      "expression": "`human_edits`"
+                    },
+                    {
+                      "name": "bot_editors",
+                      "expression": "`bot_editors`"
+                    },
+                    {
+                      "name": "human_editors",
+                      "expression": "`human_editors`"
+                    },
+                    {
+                      "name": "bot_avg_edit_size",
+                      "expression": "`bot_avg_edit_size`"
+                    },
+                    {
+                      "name": "human_avg_edit_size",
+                      "expression": "`human_avg_edit_size`"
+                    },
+                    {
+                      "name": "bot_percentage",
+                      "expression": "`bot_percentage`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Bot vs Human Detailed Breakdown by Language",
+                  "fields": []
+                }
+              },
+              "bandedRows": {
+                "enabled": true
+              },
+              "version": 2,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "language_name",
+                    "displayName": "Language",
+                    "style": {
+                      "type": "basic",
+                      "bold": true
+                    }
+                  },
+                  {
+                    "fieldName": "bot_edits",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "compact",
+                      "decimalPlaces": {
+                        "type": "exact",
+                        "places": 1
+                      }
+                    },
+                    "displayName": "Bot Edits"
+                  },
+                  {
+                    "fieldName": "human_edits",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "compact",
+                      "decimalPlaces": {
+                        "type": "exact",
+                        "places": 1
+                      }
+                    },
+                    "displayName": "Human Edits"
+                  },
+                  {
+                    "fieldName": "bot_editors",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "exact",
+                        "places": 0
+                      }
+                    },
+                    "displayName": "Bot Editors"
+                  },
+                  {
+                    "fieldName": "human_editors",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "exact",
+                        "places": 0
+                      }
+                    },
+                    "displayName": "Human Editors"
+                  },
+                  {
+                    "fieldName": "bot_avg_edit_size",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "exact",
+                        "places": 0
+                      }
+                    },
+                    "displayName": "Bot Avg Size"
+                  },
+                  {
+                    "fieldName": "human_avg_edit_size",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "exact",
+                        "places": 0
+                      }
+                    },
+                    "displayName": "Human Avg Size"
+                  },
+                  {
+                    "fieldName": "bot_percentage",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "exact",
+                        "places": 1
+                      }
+                    },
+                    "displayName": "Bot %",
+                    "formatTemplate": "{{@}}%",
+                    "style": {
+                      "type": "basic",
+                      "rules": [
+                        {
+                          "condition": {
+                            "operand": {
+                              "type": "data-value",
+                              "value": "50"
+                            },
+                            "operator": ">"
+                          },
+                          "foregroundColor": "#077A9D",
+                          "bold": true
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 8,
+            "width": 12,
+            "height": 8
+          }
+        },
+        {
+          "widget": {
+            "name": "df488300",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "aa984518",
+                  "fields": [
+                    {
+                      "name": "language_name",
+                      "expression": "`language_name`"
+                    },
+                    {
+                      "name": "edits_per_editor",
+                      "expression": "`edits_per_editor`"
+                    },
+                    {
+                      "name": "editor_type_desc",
+                      "expression": "`editor_type_desc`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Editor Productivity: Edits per Editor by Language & Type"
+              },
+              "mark": {
+                "layout": "group"
+              },
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "language_name",
+                  "axis": {
+                    "title": "Language",
+                    "labelAngle": 45
+                  },
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "custom-order",
+                      "orderedValues": [
+                        "Arabic",
+                        "Chinese",
+                        "English",
+                        "French",
+                        "German",
+                        "Italian",
+                        "Japanese",
+                        "Portuguese",
+                        "Russian",
+                        "Spanish"
+                      ]
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "edits_per_editor",
+                  "axis": {
+                    "title": "Edits per Editor"
+                  },
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "none",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    }
+                  },
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "editor_type_desc",
+                  "legend": {
+                    "position": "top",
+                    "title": "Editor Type"
+                  },
+                  "displayName": "Editor Type",
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {
+                        "value": "Bot",
+                        "color": "#077A9D"
+                      },
+                      {
+                        "value": "Human",
+                        "color": "#FFAB00"
+                      }
+                    ],
+                    "sort": {
+                      "by": "custom-order",
+                      "orderedValues": [
+                        "Bot",
+                        "Human"
+                      ]
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 16,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "aac1c3a3",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "f0f69a8c",
+                  "fields": [
+                    {
+                      "name": "bot_percentage",
+                      "expression": "`bot_percentage`"
+                    },
+                    {
+                      "name": "language_name",
+                      "expression": "`language_name`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Bot vs Human Edit Distribution",
+                  "fields": []
+                }
+              },
+              "version": 3,
+              "mark": {
+                "layout": "percent-stack"
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "bot_percentage",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "none",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    }
+                  },
+                  "formatTemplate": "{{@}}%",
+                  "axis": {
+                    "title": "Percentage Distribution"
+                  },
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "fieldName": "language_name",
+                  "axis": {
+                    "title": "Language"
+                  },
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "custom-order",
+                      "orderedValues": [
+                        "Other / Technical",
+                        "English",
+                        "Chechen",
+                        "Basque",
+                        "French",
+                        "German",
+                        "Greek",
+                        "Spanish",
+                        "Russian",
+                        "Catalan",
+                        "Arabic",
+                        "Italian",
+                        "Chinese",
+                        "Polish",
+                        "Azerbaijani"
+                      ]
+                    }
+                  }
+                },
+                "color": {
+                  "fieldName": "bot_percentage",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "none",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    }
+                  },
+                  "formatTemplate": "{{@}}%",
+                  "legend": {
+                    "position": "right",
+                    "title": "Bot %"
+                  },
+                  "displayName": "Bot %",
+                  "scale": {
+                    "type": "quantitative",
+                    "colorRamp": {
+                      "mode": "custom-diverging",
+                      "colors": {
+                        "start": "#FFAB00",
+                        "mid": "#8BCAE7",
+                        "end": "#077A9D"
+                      }
+                    },
+                    "domain": {
+                      "min": 0,
+                      "mid": 50,
+                      "max": 100
+                    }
+                  }
+                },
+                "label": {
+                  "show": true,
+                  "text": {
+                    "fieldName": "bot_percentage",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "exact",
+                        "places": 1
+                      }
+                    },
+                    "formatTemplate": "{{@}}%"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 16,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "b4c45211",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "793390c8",
+                  "fields": [
+                    {
+                      "name": "language_name",
+                      "expression": "`language_name`"
+                    },
+                    {
+                      "name": "edit_count",
+                      "expression": "`edit_count`"
+                    },
+                    {
+                      "name": "editor_type_desc",
+                      "expression": "`editor_type_desc`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Bot vs Human Edits - Side-by-Side Comparison"
+              },
+              "mark": {
+                "layout": "group",
+                "colors": [
+                  "#077A9D",
+                  "#FFAB00"
+                ]
+              },
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "language_name",
+                  "axis": {
+                    "title": "Language",
+                    "labelAngle": 45
+                  },
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "custom-order",
+                      "orderedValues": [
+                        "Arabic",
+                        "Azerbaijani",
+                        "Basque",
+                        "Catalan",
+                        "Chechen",
+                        "Chinese",
+                        "English",
+                        "French",
+                        "German",
+                        "Greek",
+                        "Italian",
+                        "Other / Technical",
+                        "Polish",
+                        "Russian",
+                        "Spanish"
+                      ]
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "edit_count",
+                  "axis": {
+                    "title": "Edit Count"
+                  },
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    }
+                  },
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "editor_type_desc",
+                  "legend": {
+                    "position": "top",
+                    "title": "Editor Type"
+                  },
+                  "displayName": "Editor Type",
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {
+                        "value": "Bot",
+                        "color": "#077A9D"
+                      },
+                      {
+                        "value": "Human",
+                        "color": "#FFAB00"
+                      }
+                    ],
+                    "sort": {
+                      "by": "custom-order",
+                      "orderedValues": [
+                        "Bot",
+                        "Human"
+                      ]
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 22,
+            "width": 12,
+            "height": 6
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+    },
+    "applyModeEnabled": false
+  }
+}

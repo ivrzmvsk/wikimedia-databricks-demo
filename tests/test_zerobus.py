@@ -63,7 +63,7 @@ def test_zerobus_targets_match_bundle_catalogs_and_are_not_lab11_tables():
         "workspace.demo_bronze.zerobus_wikimedia_inbox"
     )
     assert producer.table_name("azure_trial_2", "demo_bronze") == (
-        "dbr_dev.demo_bronze.zerobus_wikimedia_inbox"
+        "dbr_dev.demo_bronze.raw_events"
     )
     with pytest.raises(ValueError, match="identifier"):
         producer.table_name("ivan_personal", "schema; DROP TABLE x")
@@ -217,3 +217,12 @@ def test_silver_pipeline_reads_inbox_directly_without_persisting_another_bronze(
     assert row._source == "zerobus_wikimedia_recentchange"
     assert row.meta_id == record()["event_key"]
     assert row._dq_passed is True
+
+
+def test_prod_producer_defaults_match_bundle_raw_event_destination():
+    import yaml
+
+    bundle = yaml.safe_load((ROOT / "databricks.yml").read_text())
+    variables = bundle["targets"]["azure_trial_2"]["variables"]
+    expected = ".".join(variables[name] for name in ("catalog", "bronze_schema", "raw_events_table"))
+    assert producer.table_name("azure_trial_2") == expected

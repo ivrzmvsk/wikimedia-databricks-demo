@@ -31,6 +31,7 @@ resources:
         wikimedia.repo_root: ${workspace.file_path}
         wikimedia.catalog: ${var.catalog}
         wikimedia.bronze_schema: ${var.bronze_schema}
+        wikimedia.raw_events_table: ${var.raw_events_table}
         wikimedia.silver_schema: ${var.silver_schema}
       libraries:
         - file:
