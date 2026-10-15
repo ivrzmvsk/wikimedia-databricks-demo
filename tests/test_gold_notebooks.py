@@ -40,6 +40,9 @@ def test_parameterized_gold_build_reconciles_and_can_be_rerun(spark):
     try:
         run("config.py")
         run("setup.py")
+        run("setup_inbox.py")
+        run("setup_gold.py")
+        assert spark.table("spark_catalog.bundle_test_gold.fact_wikipedia_edits").count() == 0
         spark.sql("""
             CREATE OR REPLACE TEMP VIEW reference_fixture AS
             SELECT 'enwiki' AS wiki_code, 'en' AS language_code,
@@ -67,10 +70,14 @@ def test_parameterized_gold_build_reconciles_and_can_be_rerun(spark):
             for path in ("gold/01_dim_date.py", "gold/02_dim_project.py",
                          "gold/03_dim_editor_type.py", "gold/04_fact_wikipedia_edits.py"):
                 run(path)
+            run("check_reference.py")
             run("check_gold.py")
         facts = spark.table("spark_catalog.bundle_test_gold.fact_wikipedia_edits")
         rows = {row.event_id: row for row in facts.collect()}
         assert len(rows) == 2
+        # Setup can be repeated without clearing an existing fact table.
+        run("setup_gold.py")
+        assert facts.count() == 2
         assert rows[1].byte_change == 15
         assert rows[2].abs_byte_change == 10
         assert rows[1].editor_type_key == 1

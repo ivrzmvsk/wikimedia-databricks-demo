@@ -3,6 +3,15 @@
 
 # COMMAND ----------
 
+# Reject unusable snapshots before replacing the last published dimension.
+reference = spark.sql(f"""
+    SELECT COUNT(*) AS projects, COUNT(DISTINCT wiki_code) AS unique_projects
+    FROM {SILVER}.silver_ref_wikimedia_projects
+    WHERE __END_AT IS NULL
+""").first()
+if reference["projects"] == 0 or reference["projects"] != reference["unique_projects"]:
+    raise RuntimeError("Reference snapshot is empty or has duplicate/null wiki codes; keeping dim_project.")
+
 spark.sql(f"""
 CREATE OR REPLACE TABLE {GOLD}.dim_project AS
 SELECT
@@ -264,12 +273,10 @@ SELECT
 FROM {SILVER}.silver_ref_wikimedia_projects
 -- SCD Type 2: __END_AT IS NULL identifies the current (active) record version
 WHERE __END_AT IS NULL
-""")
 
-# COMMAND ----------
-
-spark.sql(f"""
--- Insert fallback default record for orphan prevention
-INSERT INTO {GOLD}.dim_project (project_key, wiki_code, language_code, language_name, project_name, site_url, gold_updated_at)
-VALUES (md5('unknown'), 'unknown', 'unknown', 'Other / Technical', 'Other Wikimedia Project', 'https://www.wikimedia.org', current_timestamp())
+-- Publish the fallback in the same transaction as the reference rows so the
+-- independent event job never observes a dimension without its fallback.
+UNION ALL
+SELECT md5('unknown'), 'unknown', 'unknown', 'Other / Technical',
+    'Other Wikimedia Project', 'https://www.wikimedia.org', current_timestamp()
 """)

@@ -1,0 +1,32 @@
+bundle:
+  name: wikimedia-rag-serving
+  databricks_cli_version: '>= 1.1.0'
+  engine: direct
+workspace:
+  root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+variables:
+  catalog:
+    default: workspace
+  ai_schema:
+    default: wikimediademo_ai
+  endpoint_name:
+    description: Existing STANDARD endpoint; this bundle never creates or owns it.
+  index_name:
+    default: ${var.catalog}.${var.ai_schema}.wikimedia_summary_index
+  app_name:
+    default: wikimedia-assistant-${bundle.target}
+  embedding_endpoint:
+    default: databricks-qwen3-embedding-0-6b
+  llm_endpoint:
+    default: databricks-gemma-3-12b
+include:
+  - search.yml
+# RAG resources are restricted to the personal workspace.
+targets:
+  ivan_personal:
+    default: true
+    workspace:
+      profile: personal-env
+      host: https://dbc-ab9a5afe-c151.cloud.databricks.com
+    variables:
+      endpoint_name: ivanrazumovskyi-lab12-steam-dev

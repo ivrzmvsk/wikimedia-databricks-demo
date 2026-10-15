@@ -1,0 +1,115 @@
+bundle:
+  name: wikimedia-rag-preparation
+  databricks_cli_version: '>= 1.1.0'
+  engine: direct
+workspace:
+  root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+sync:
+  paths:
+    - ../../src/wikimedia_rag
+    - ../../notebooks/rag
+    - ../../app/wikimedia_assistant
+    - ../../rag_docs
+variables:
+  catalog:
+    default: workspace
+  silver_schema:
+    default: wikimediademo_silver
+  ai_schema:
+    default: wikimediademo_ai
+  start:
+    default: ''
+  end:
+    default: ''
+  article_limit:
+    default: '1'
+  titles_json:
+    description: Optional JSON array of explicit Silver article titles for a curated demo.
+    default: '[]'
+  max_attempts:
+    default: '1'
+  contact:
+    default: https://github.com/ivrzmvsk/wikimedia-databricks-demo/issues
+  refresh:
+    default: expired
+  ttl_hours:
+    default: '168'
+  http_timeout:
+    default: '10'
+  http_delay:
+    default: '1'
+  http_retries:
+    default: '0'
+  sync_timeout:
+    default: '1200'
+  endpoint_name:
+    default: wikimedia-rag-${bundle.target}
+  index_name:
+    default: ${var.catalog}.${var.ai_schema}.wikimedia_summary_index
+  embedding_endpoint:
+    default: databricks-qwen3-embedding-0-6b
+  llm_endpoint:
+    default: databricks-gemma-3-12b
+resources:
+  jobs:
+    wikimedia_rag:
+      name: wikimedia_rag_${bundle.target}
+      max_concurrent_runs: 1
+      timeout_seconds: 1800
+      queue:
+        enabled: false
+      parameters:
+        - name: base_corpus_id
+          default: ''
+        - name: titles_json
+          default: ${var.titles_json}
+        - name: action
+          default: prepare
+        - name: start
+          default: ${var.start}
+        - name: end
+          default: ${var.end}
+        - name: article_limit
+          default: ${var.article_limit}
+        - name: max_attempts
+          default: ${var.max_attempts}
+      environments:
+        - environment_key: rag
+          spec:
+            environment_version: '4'
+            dependencies:
+              - requests==2.34.2
+              - databricks-sdk==0.152.0
+      tasks:
+        - task_key: rag
+          environment_key: rag
+          notebook_task:
+            notebook_path: ../../notebooks/rag/run.py
+            base_parameters:
+              repo_root: ${workspace.file_path}
+              action: '{{job.parameters.action}}'
+              base_corpus_id: '{{job.parameters.base_corpus_id}}'
+              titles_json: '{{job.parameters.titles_json}}'
+              catalog: ${var.catalog}
+              silver_schema: ${var.silver_schema}
+              ai_schema: ${var.ai_schema}
+              start: '{{job.parameters.start}}'
+              end: '{{job.parameters.end}}'
+              article_limit: '{{job.parameters.article_limit}}'
+              max_attempts: '{{job.parameters.max_attempts}}'
+              contact: ${var.contact}
+              refresh: ${var.refresh}
+              ttl_hours: ${var.ttl_hours}
+              http_timeout: ${var.http_timeout}
+              http_delay: ${var.http_delay}
+              http_retries: ${var.http_retries}
+              sync_timeout: ${var.sync_timeout}
+              index_name: ${var.index_name}
+              embedding_endpoint: ${var.embedding_endpoint}
+              llm_endpoint: ${var.llm_endpoint}
+targets:
+  ivan_personal:
+    default: true
+    workspace:
+      profile: personal-env
+      host: https://dbc-ab9a5afe-c151.cloud.databricks.com

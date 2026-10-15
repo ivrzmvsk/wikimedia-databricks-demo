@@ -1,0 +1,13 @@
+resources:
+  vector_search_indexes:
+    wikimedia_index:
+      name: ${var.index_name}
+      endpoint_name: ${var.endpoint_name}
+      primary_key: chunk_id
+      index_type: DELTA_SYNC
+      delta_sync_index_spec:
+        source_table: ${var.catalog}.${var.ai_schema}.knowledge_chunks
+        pipeline_type: TRIGGERED
+        embedding_source_columns:
+          - name: text
+            embedding_model_endpoint_name: ${var.embedding_endpoint}

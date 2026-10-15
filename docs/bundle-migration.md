@@ -10,23 +10,24 @@ separate: `bundle deploy` uploads code and creates/updates resource definitions;
 1. The `ivan_personal` target uses `personal-env` / `workspace`; `azure_trial_2` uses
    `azure_trial_2` / `dbr_dev`. Select the intended target and set `BUNDLE_VAR_warehouse_id`.
 2. Run `databricks bundle validate -t ivan_personal --strict`.
-3. Deploy and run `wikimedia_medallion` in `ivan_personal`.
-4. Check both Lakeflow updates, Gold checks, and governance in the Jobs UI.
+3. Deploy with schedules paused; follow [manual setup](manual-setup.md) if needed.
+   Run `wikimedia_reference`, then `wikimedia_medallion` independently.
+4. Check both independent job runs and their quality checks; confirm setup governance on first install.
 5. Confirm the selected profile/catalog and override schemas if names are already in use.
 
 The bundle requires serverless Jobs/Lakeflow, an existing catalog, SQL warehouse,
-and Zerobus OAuth credentials. It creates schemas and the inbox at workflow
-runtime. Azure resources and the external producer keep their existing lifecycle.
+and Zerobus OAuth credentials. Schemas and the inbox are created by the manual setup job. Azure resources and the external producer keep their existing lifecycle.
 
 ## Existing Event Hubs deployment
 
-Keep the current pipeline IDs, schemas and tables. The active streaming source
-is now only the Zerobus inbox. Bronze uses a named `zerobus_wikimedia_ingest`
-append flow with its own checkpoint, while the former Kafka flow is removed.
-This preserves historical Bronze rows and the existing Silver stream state.
-Run setup first, then the producer, then the full workflow. Do not request a
-full refresh: the inbox does not contain the historical Event Hubs records.
-No second pipeline or separate set of Gold tables is needed for this cutover.
+Keep the current pipeline IDs and schema names. The streaming pipeline now
+reads the Zerobus inbox directly and no longer defines a `bronze_stream` table.
+For deployments that already have that table, follow [inbox cutover](inbox-cutover.md)
+before running the new source: archive old tables for rollback, backfill missing
+historical raw payloads into inbox, then explicitly refresh only Silver/quarantine
+and rebuild Gold. Retire the old Bronze table only after coverage checks pass.
+Existing Azure deployments require their own migration; the DEV cutover does not
+migrate Azure history automatically.
 
 ## Choose how to handle existing Azure table ownership
 
@@ -96,12 +97,32 @@ must be configured explicitly if notifications are needed.
    before deployment if you intend to adopt them instead of creating a second set.
 2. Bind compatible existing resources or choose unused schemas.
 3. Validate and deploy `azure_trial_2` with schedules paused.
-4. Run the complete `wikimedia_medallion` workflow and inspect its outputs.
+4. Complete manual setup as needed, then run `wikimedia_reference` and
+   `wikimedia_medallion`; inspect their checks; setup applies governance before processing.
 5. Switch consumers from legacy Silver names to `silver_wikipedia_edits` where
    needed. The bundle Gold fact already reads this table.
 6. Keep schedules paused for these targets and run the workflow
-   manually. A future scheduled deployment needs a target configured for it.
+   manually: `wikimedia_reference` for reference refresh, `wikimedia_medallion`
+   for events. A future scheduled deployment needs a target configured for it.
 
 Do not use `bundle destroy` to roll back a migration of adopted pipelines: it can
 remove their managed datasets. Keep the previous commit/configuration and treat
 resource rollback and data restoration as separate operations.
+
+## Splitting an existing combined workflow
+
+The `wikimedia_medallion` resource key is retained, so the existing job is updated
+in place to process events only. The streaming and batch pipeline resource keys
+are unchanged; no table ownership or checkpoint migration is required.
+The bundle has three jobs: manual `wikimedia_setup`, independent
+`wikimedia_reference`, and the events job (display name `wikimedia_events`,
+retained resource key `wikimedia_medallion`). The previous `wikimedia_initialize`
+wrapper is absent. No job starts another job.
+
+Keep schedules paused while deploying and running setup. The setup job creates
+an empty fact table only if absent and attaches governance without replacing
+existing facts. Existing Silver outputs and both pipeline IDs are retained.
+Run setup, then reference and events independently to verify the deployment.
+See [setup instructions](manual-setup.md). API failures in reference refresh do
+not prevent events from using the last published project dimension. Configure
+failure email recipients and SQL alert subscriptions before enabling schedules.

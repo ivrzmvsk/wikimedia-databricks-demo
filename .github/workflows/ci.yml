@@ -44,6 +44,9 @@ jobs:
             --builtins=spark,dbutils,display,CATALOG,GOLD,SILVER,BRONZE,DATA_ENGINEERS_GROUP,ADMINS_GROUP,ROW_ADMIN_GROUP,ZEROBUS_SERVICE_PRINCIPAL,identifier \
             --show-source --statistics
 
+      - name: Compile RAG Job and App sources
+        run: python -m compileall -q src/wikimedia_rag notebooks/rag app/wikimedia_assistant scripts/package_rag_app.py scripts/sync_rag.py
+
       - name: Run PySpark Tests
         run: |
           pytest tests/ -v

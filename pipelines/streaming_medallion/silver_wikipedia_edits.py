@@ -32,13 +32,13 @@ add_repo_src_to_path()
 
 from wikimedia_stream.dedup import add_dedup_key, deduplicate_stream_records
 from wikimedia_stream.dq_rules import DQ_RULES, compute_dq_flags
-from wikimedia_stream.transforms import parse_bronze_to_silver
+from wikimedia_stream.transforms import decode_zerobus_events, parse_bronze_to_silver
 
 
 CATALOG_NAME = spark.conf.get("wikimedia.catalog", "dbr_dev")
 BRONZE_SCHEMA_NAME = spark.conf.get("wikimedia.bronze_schema", "wikimediademo_bronze")
 SILVER_SCHEMA_NAME = spark.conf.get("wikimedia.silver_schema", "wikimediademo_silver")
-BRONZE_STREAM_TABLE = f"{CATALOG_NAME}.{BRONZE_SCHEMA_NAME}.bronze_stream"
+ZEROBUS_INBOX_TABLE = f"{CATALOG_NAME}.{BRONZE_SCHEMA_NAME}.zerobus_wikimedia_inbox"
 SILVER_EDITS_TABLE = f"{CATALOG_NAME}.{SILVER_SCHEMA_NAME}.silver_wikipedia_edits"
 SILVER_QUARANTINE_TABLE = (
     f"{CATALOG_NAME}.{SILVER_SCHEMA_NAME}.silver_wikipedia_edits_quarantine"
@@ -47,7 +47,8 @@ SILVER_QUARANTINE_TABLE = (
 
 @dp.temporary_view(name="silver_wikipedia_edits_staging")
 def silver_wikipedia_edits_staging():
-    bronze = dp.read_stream(BRONZE_STREAM_TABLE)
+    # The adapter is a projection only; inbox is the sole persisted Bronze table.
+    bronze = decode_zerobus_events(spark.readStream.table(ZEROBUS_INBOX_TABLE))
     return compute_dq_flags(add_dedup_key(parse_bronze_to_silver(bronze)))
 
 

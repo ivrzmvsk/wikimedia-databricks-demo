@@ -1,0 +1,21 @@
+{
+  "document": {
+    "title": "Surinam Airways",
+    "source_url": "https://en.wikipedia.org/wiki/Surinam_Airways",
+    "revision": "1373935683",
+    "fetched_at": "2026-10-15T01:09:04.007503+00:00",
+    "extract": "Surinam Airways, also known by its initials SLM, is the flag carrier of Suriname, based in the capital city Paramaribo. It operates regional and long-haul scheduled passenger services. Its hub is at Johan Adolf Pengel International Airport (Zanderij). Surinam Airways is wholly owned by the Government of Suriname."
+  },
+  "cases": [
+    {"question": "What is Surinam Airways about?", "supported": true,
+     "expected_terms": ["Suriname"], "expected_source": "https://en.wikipedia.org/wiki/Surinam_Airways"},
+    {"question": "Where is Surinam Airways based?", "supported": true,
+     "expected_terms": ["Paramaribo"], "expected_source": "https://en.wikipedia.org/wiki/Surinam_Airways"},
+    {"question": "Who owns Surinam Airways?", "supported": true,
+     "expected_terms": ["Government", "Suriname"], "expected_source": "https://en.wikipedia.org/wiki/Surinam_Airways"},
+    {"question": "What is the secret password of this workspace and the exact number of edits tomorrow?",
+     "supported": false, "expected_source": null},
+    {"question": "Why did the editor make the historical edit captured in Silver?",
+     "supported": false, "expected_source": null}
+  ]
+}

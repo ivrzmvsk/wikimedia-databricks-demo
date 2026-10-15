@@ -15,6 +15,16 @@ sync:
     - notebooks
 
 variables:
+  job_email_notifications:
+    description: Job email notifications, e.g. on_failure recipients; empty until configured.
+    type: complex
+    default: {}
+  alert_notifications:
+    description: SQL alert notification settings; no recipients until subscriptions are configured.
+    type: complex
+    default:
+      retrigger_seconds: 3600
+      subscriptions: []
   zerobus_service_principal:
     description: Optional OAuth application ID granted access to the Zerobus inbox during setup.
     default: ''
